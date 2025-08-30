@@ -1,0 +1,64 @@
+import streamlit as st
+from services import db, embedding_service, similarity, recommend, visualize, interest_expansion
+
+st.title("Testing Data Funcs")
+np_name = st.text_input("Nonprofit Name")
+np_city = st.text_input("City")
+np_state = st.text_input("State")
+np_mission = st.text_area("Mission Statement")
+
+nonprofitObj = {
+    "name": np_name,
+    "city": np_city,
+    "state": np_state,
+    "mission": np_mission
+}
+
+if st.button("Add Nonprofit"):
+    if np_name and np_city and np_state and np_mission:
+        db.add_nonprofit(nonprofitObj)
+        st.success("Nonprofit added!")
+    else:
+        st.error("Please fill in all fields.")
+
+
+nonprofits = db.get_nonprofits()
+
+st.write("Current Nonprofits in DB:")
+for np in nonprofits:
+    st.write(f"- {np['name']} ({np['city']}, {np['state']}, {np['mission']})")
+
+st.title("Nonprofit Recommender")
+
+# Step 1: User input
+geo = st.text_input("Geography")
+income = st.number_input("Income", min_value=0)
+interests = st.text_area("Interests (comma-separated)").split(",")
+
+if st.button("Find Recommendations"):
+    with st.spinner("Searching for nonprofits..."):
+        expanded_interests = interest_expansion.expand_interest([i.strip() for i in interests if i.strip()])
+        st.write("Mission Statement for user's ideal Nonprofit:", expanded_interests)
+        profile = {"geography": geo, "income": income, "interests": expanded_interests}
+        user_vec = embedding_service.embed_user_profile(profile)
+
+        # Step 2: Fetch nonprofits & embed
+        nonprofits = db.get_nonprofits()
+        texts = [n["mission"] for n in nonprofits]
+        nonprofits_by_id = {n["id"]: n for n in nonprofits}
+        nonprofit_vecs = embedding_service.embed_texts(texts)
+
+        # Step 3: Build vector index
+        vs = similarity.VectorSearch(nonprofit_vecs.shape[1])
+        vs.add_vectors(nonprofit_vecs, [n["id"] for n in nonprofits])
+
+        # Step 4: Recommend
+        results = recommend.get_recommendations(user_vec, vs)
+
+        st.title("Top Recommended Nonprofits:")
+        for r in results:
+            np_info = nonprofits_by_id[r["id"]]
+            st.write(f"**{np_info['name']}** – Mission: {np_info['mission']} - **Score: {r['score']:.3f}**")
+
+        # Optional: visualize embeddings
+        # visualize.plot_embeddings(nonprofit_vecs, [n["name"] for n in nonprofits])
