@@ -1,0 +1,18 @@
+[project]
+name = "pairwell_search"
+version = "0.1.0"
+description = "AI-powered nonprofit recommendation engine"
+authors = [
+    { name = "Logan" }
+]
+dependencies = [
+    "numpy",
+    "faiss-cpu",
+    "requests",
+    "streamlit"
+]
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+packages = [{include = "pairwell_search"}]

@@ -17,3 +17,9 @@ def test_embed_user_profile():
     vec = embed_user_profile(profile)
     assert isinstance(vec, np.ndarray)
     assert vec.shape[0] > 0
+
+def test_embed_texts_returns_correct_shape():
+    texts = ["Save animals worldwide.", "Provide education to children."]
+    vectors = embed_texts(texts)
+    assert isinstance(vectors, np.ndarray)
+    assert vectors.shape[0] == len(texts)

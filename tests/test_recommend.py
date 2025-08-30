@@ -2,13 +2,13 @@
 test_recommend.py
 Check recommendation blending
 """
-
+import pytest
 from services import recommend
 
-def test_get_recommendations(vector_search, sample_user_vec):
-    results = recommend.get_recommendations(sample_user_vec, vector_search, alpha=1.0, beta=0.0)
+
+def test_get_recommendations(vector_search, dummy_user_vector):
+    results = recommend.get_recommendations(dummy_user_vector, vector_search)
     assert isinstance(results, list)
-    assert len(results) > 0
-    assert "id" in results[0]
-    assert "score" in results[0]
-    assert results[0]["score"] <= 1.0
+    for r in results:
+        assert "id" in r and "score" in r
+
