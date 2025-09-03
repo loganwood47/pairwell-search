@@ -40,9 +40,11 @@ income = st.number_input("Income", min_value=0)
 interests = st.text_area("Interests (comma-separated)").split(",")
 
 if st.button("Find Recommendations"):
+    # TODO: Replace these with vector search once DB implemented
     with st.spinner("Searching for nonprofits..."):
         expanded_interests = interest_expansion.expand_interest([i.strip() for i in interests if i.strip()])
-        st.write("Mission Statement for user's ideal Nonprofit:", expanded_interests)
+        if debug:
+            st.write("Mission Statement for user's ideal Nonprofit:", expanded_interests)
         profile = {"geography": geo, "income": income, "interests": expanded_interests}
         user_vec = embedding_service.embed_user_profile(profile)
 
