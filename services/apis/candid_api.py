@@ -6,7 +6,7 @@ from .. import db
 
 class CandidAPI:
     # TODO: refactor out different API clients
-    BASE_URL = "https://api.candid.org/essentials/v3"
+    ESSENTIALS_BASE_URL = "https://api.candid.org/essentials/v3"
 
     def __init__(self, api_key: str):
         self.api_key = api_key
@@ -19,14 +19,14 @@ class CandidAPI:
 
     def fetch_nonprofit(self, ein: str) -> Dict:
         """Fetch a single nonprofit by EIN"""
-        url = f"{self.BASE_URL}/organizations/{ein}"
+        url = f"{self.ESSENTIALS_BASE_URL}/organizations/{ein}"
         resp = requests.get(url, headers=self.headers)
         resp.raise_for_status()
         return resp.json()
 
     def search_nonprofits(self, query: str, limit: int = 50, offset: int = 0) -> List[Dict]:
         """Search nonprofits by keyword"""
-        url = f"{self.BASE_URL}/organizations"
+        url = f"{self.ESSENTIALS_BASE_URL}/organizations"
         params = {
             "q": query,
             "limit": limit,
@@ -53,10 +53,12 @@ class CandidAPI:
     def _transform_record(self, record: Dict) -> Dict:
         """matching to nonprofits table schema in Supabase"""
         return {
+            # Geos
             "city": record["geography"].get("city"),
             "state": record["geography"].get("state"),
             "latitude": record["geography"].get("latitude"),
             "longitude": record["geography"].get("longitude"),
+            # Org object
             "name": record["organization"].get("organization_name"),
             "mission": record["organization"].get("mission"),
             "ein": record["organization"].get("ein"),
@@ -65,9 +67,12 @@ class CandidAPI:
             "contact_email": record["organization"].get("contact_email"),
             "contact_phone": record["organization"].get("contact_phone"),
             "employee_count": record["organization"].get("number_of_employees"),
+            "logo_url": record["organization"].get("logo_url"),
+            # Financials
             "total_revenue": record["financials"]["most_recent_year"].get("total_revenue"),
             "total_expenses": record["financials"]["most_recent_year"].get("total_expenses"),
             "total_assets": record["financials"]["most_recent_year"].get("total_assets"),
+            # Taxonomies
             "subject_codes": record["taxonomies"].get("subject_codes"),
             "population_served_codes": record["taxonomies"].get("population_served_codes"),
             "ntee_codes": record["taxonomies"].get("ntee_codes"),

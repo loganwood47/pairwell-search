@@ -1,32 +1,36 @@
 import streamlit as st
 from services import db, embedding_service, similarity, recommend, visualize, interest_expansion
 
-st.title("Testing Data Funcs")
-np_name = st.text_input("Nonprofit Name")
-np_city = st.text_input("City")
-np_state = st.text_input("State")
-np_mission = st.text_area("Mission Statement")
+debug = st.toggle("Debug Mode", False)
+if debug:
+    st.write("Debug mode is ON")
 
-nonprofitObj = {
-    "name": np_name,
-    "city": np_city,
-    "state": np_state,
-    "mission": np_mission
-}
+    st.title("Testing Data Funcs")
+    np_name = st.text_input("Nonprofit Name")
+    np_city = st.text_input("City")
+    np_state = st.text_input("State")
+    np_mission = st.text_area("Mission Statement")
 
-if st.button("Add Nonprofit"):
-    if np_name and np_city and np_state and np_mission:
-        db.add_nonprofit(nonprofitObj)
-        st.success("Nonprofit added!")
-    else:
-        st.error("Please fill in all fields.")
+    nonprofitObj = {
+        "name": np_name,
+        "city": np_city,
+        "state": np_state,
+        "mission": np_mission
+    }
+
+    if st.button("Add Nonprofit"):
+        if np_name and np_city and np_state and np_mission:
+            db.add_nonprofit(nonprofitObj)
+            st.success("Nonprofit added!")
+        else:
+            st.error("Please fill in all fields.")
 
 
-nonprofits = db.get_nonprofits()
+    nonprofits = db.get_nonprofits()
 
-st.write("Current Nonprofits in DB:")
-for np in nonprofits:
-    st.write(f"- {np['name']} ({np['city']}, {np['state']}, {np['mission']})")
+    st.write("Current Nonprofits in DB:")
+    for np in nonprofits:
+        st.write(f"- {np['name']} ({np['city']}, {np['state']}, {np['mission']})")
 
 st.title("Nonprofit Recommender")
 
