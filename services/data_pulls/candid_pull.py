@@ -1,6 +1,11 @@
-from ..apis.candid_api import CandidAPI
+from ..apis.candid_api import CandidEssentialsAPI
 
-candid = CandidAPI(api_key="CANDID_API_KEY")
+import os
+
+CANDID_ESSENTIALS_API_KEY = os.getenv("CANDID_ESSENTIALS_API_KEY")
+
+candid = CandidEssentialsAPI(api_key=CANDID_ESSENTIALS_API_KEY)
+# TODO: test single pull of real API using search terms
 
 sample_response = {
   "code": 200,

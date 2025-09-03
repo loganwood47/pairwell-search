@@ -4,9 +4,9 @@ from .. import db
 # TODO: add graphql client for Candid taxonomy api
 # TODO: normalize NP database, split nonprofit into multiple tables (geo, codes, financials etc)
 
-class CandidAPI:
+class CandidEssentialsAPI:
     # TODO: refactor out different API clients
-    ESSENTIALS_BASE_URL = "https://api.candid.org/essentials/v3"
+    BASE_URL = "https://api.candid.org/essentials/v3"
 
     def __init__(self, api_key: str):
         self.api_key = api_key
@@ -19,16 +19,17 @@ class CandidAPI:
 
     def fetch_nonprofit(self, ein: str) -> Dict:
         """Fetch a single nonprofit by EIN"""
-        url = f"{self.ESSENTIALS_BASE_URL}/organizations/{ein}"
+        url = f"{self.BASE_URL}/organizations/{ein}"
         resp = requests.get(url, headers=self.headers)
         resp.raise_for_status()
         return resp.json()
 
     def search_nonprofits(self, query: str, limit: int = 50, offset: int = 0) -> List[Dict]:
         """Search nonprofits by keyword"""
-        url = f"{self.ESSENTIALS_BASE_URL}/organizations"
+        url = f"{self.BASE_URL}"
         params = {
-            "q": query,
+            # "q": query,
+            "search_terms": query,
             "limit": limit,
             "offset": offset
         }
