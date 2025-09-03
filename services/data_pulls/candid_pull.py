@@ -1,4 +1,4 @@
-from candid_api import CandidAPI
+from ..apis.candid_api import CandidAPI
 
 candid = CandidAPI(api_key="CANDID_API_KEY")
 
@@ -119,5 +119,12 @@ sample_response = {
 categories = ["education", "animals", "health"]
 # candid.seed_nonprofits(categories)
 
-recordTrans = candid._transform_record(sample_response["hits"][0]["organization"])
+
+recordTrans = candid._transform_record(sample_response["hits"][0]) #["organization"])
 print(recordTrans)
+
+addRec = candid._add_single_nonprofit(sample_response["hits"][0]) #["organization"])
+print(addRec)
+print("Done")
+
+

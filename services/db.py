@@ -23,6 +23,7 @@ def get_nonprofits(limit: int = 1000):
 def add_nonprofit(nonprofit: dict):
     """Save a new nonprofit"""
     resp = supabase.table("nonprofits").insert(nonprofit).execute()
+    print(resp)
     return resp.data
 
 
