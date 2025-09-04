@@ -1,6 +1,8 @@
 from ..apis.candid_api import CandidEssentialsAPI
 from .. import db
 
+import json
+
 import os
 
 CANDID_ESSENTIALS_API_KEY = os.getenv("CANDID_ESSENTIALS_API_KEY")
@@ -56,7 +58,7 @@ sample_response = {
             },
             "geography": {
                 "address_line_1": "2937 SW 27th Ave Ste 203",
-                "address_line_2": "",
+                "address_line_2": None,
                 "city": "Miami",
                 "state": "FL",
                 "zip": "33133",
@@ -164,7 +166,7 @@ sample_response = {
                 "organization_id": "8962613",
                 "ein": "27-3185735",
                 "organization_name": "The CLEO Institute Inc",
-                "also_known_as": "",
+                "also_known_as": None,
                 "group_exemption": "0000",
                 "mission": "TO EDUCATE & EMPOWER COMMUNITIES TO DEMAND CLIMATE ACTION, ENSURING A SAFE, JUST & HEALTHY ENVIRONMENT FOR ALL.",
                 "website_url": "http://www.cleoinstitute.org",
@@ -198,7 +200,7 @@ sample_response = {
             },
             "geography": {
                 "address_line_1": "2103 Coral Way Fl 2",
-                "address_line_2": "",
+                "address_line_2": None,
                 "city": "Miami",
                 "state": "FL",
                 "zip": "33145",
@@ -304,7 +306,7 @@ sample_response = {
                 "profile_link": "https://www.guidestar.org/profile/20-5196010",
                 "profile_logo": "https://www.guidestar.org/App_Themes/MainSite2/images/ProfilePageSvgs/profile-PLATINUM2023-seal.svg",
                 "leader_name": "Barbara Martinez-Guerrero",
-                "leader_title": "",
+                "leader_title": None,
                 "contact_name": "Barbara Martinez-Guerrero",
                 "contact_email": "barbara@dreamingreen.org",
                 "contact_phone": "(786) 574-4909",
@@ -328,7 +330,7 @@ sample_response = {
             },
             "geography": {
                 "address_line_1": "2103 Coral Way Center For Social Change 2nd Floor",
-                "address_line_2": "",
+                "address_line_2": None,
                 "city": "Miami",
                 "state": "FL",
                 "zip": "33145",
@@ -420,7 +422,7 @@ sample_response = {
                 "organization_id": "8041374",
                 "ein": "65-0350357",
                 "organization_name": "The Miami Foundation",
-                "also_known_as": "",
+                "also_known_as": None,
                 "group_exemption": "0000",
                 "mission": "The Miami Foundation builds the philanthropic, civic, and leadership backbone for Greater Miami. Since 1967, the Foundation has invested $485 million to strengthen our community with partnerships and contributions from more than 1000 fundholders and 35,000 donors. The Miami Foundation, which currently manages over $350 million in assets, mobilizes donors, nonprofits, leaders, and locals to set a bold vision for our community's future and to invest in a stronger, more equitable, more resilient Greater Miami.",
                 "website_url": "http://www.miamifoundation.org/",
@@ -428,12 +430,12 @@ sample_response = {
                 "profile_level": "None",
                 "profile_year":  None,
                 "profile_link": "https://www.guidestar.org/profile/65-0350357",
-                "profile_logo": "",
+                "profile_logo": None,
                 "leader_name": "Rebecca Fishman Lipsey",
                 "leader_title": "President and CEO",
                 "contact_name": "Ms. Rebecca Fishman Lipsey",
                 "contact_email": "rfl@miamifoundation.org",
-                "contact_phone": "",
+                "contact_phone": None,
                 "contact_title": "President and CEO",
                 "number_of_employees": "50",
                 "ruling_year": 1992
@@ -454,7 +456,7 @@ sample_response = {
             },
             "geography": {
                 "address_line_1": "40 NW 3rd St Ste 305",
-                "address_line_2": "",
+                "address_line_2": None,
                 "city": "Miami",
                 "state": "FL",
                 "zip": "33128",
@@ -546,22 +548,22 @@ sample_response = {
                 "organization_id": "9997334",
                 "ein": "86-2827046",
                 "organization_name": "Resilience Youth Network",
-                "also_known_as": "",
+                "also_known_as": None,
                 "group_exemption": "0000",
-                "mission": "",
+                "mission": None,
                 "website_url": "resilienceyouthnetwork.org",
-                "logo_url": "",
+                "logo_url": None,
                 "profile_level": "None",
                 "profile_year":  None,
                 "profile_link": "https://www.guidestar.org/profile/86-2827046",
-                "profile_logo": "",
-                "leader_name": "",
-                "leader_title": "",
-                "contact_name": "",
-                "contact_email": "",
-                "contact_phone": "",
-                "contact_title": "",
-                "number_of_employees": "",
+                "profile_logo": None,
+                "leader_name": None,
+                "leader_title": None,
+                "contact_name": None,
+                "contact_email": None,
+                "contact_phone": None,
+                "contact_title": None,
+                "number_of_employees": None,
                 "ruling_year": 2021
             },
             "properties": {
@@ -580,7 +582,7 @@ sample_response = {
             },
             "geography": {
                 "address_line_1": "441 NE 52nd St",
-                "address_line_2": "",
+                "address_line_2": None,
                 "city": "Miami",
                 "state": "FL",
                 "zip": "33137",
@@ -615,7 +617,7 @@ sample_response = {
             },
             "financials": {
                 "most_recent_year": {
-                    "form_type": "",
+                    "form_type": None,
                     "fiscal_year":  None,
                     "total_revenue":  None,
                     "total_expenses":  None,
@@ -627,10 +629,10 @@ sample_response = {
                 "a_133_audit_performed": False
             },
             "dates": {
-                "seal_last_modified": "",
-                "profile_last_modified": "",
-                "dei_last_modified": "",
-                "financials_last_modified": "",
+                "seal_last_modified": None,
+                "profile_last_modified": None,
+                "dei_last_modified": None,
+                "financials_last_modified": None,
                 "last_modified": "2022-09-09T13:27:18.0000000"
             }
         },
@@ -643,18 +645,18 @@ sample_response = {
                 "group_exemption": "0000",
                 "mission": "Empowerconsumerswithknowledgeandtoolstowithstandnaturalhazardswithlong-lastingandresilienthomesandcommunities,includingpublications,documentaries,buildingresilienceindex,homebuyers'guide,publicoutreachandothereducationaltools.",
                 "website_url": "www.buildingresilient.com",
-                "logo_url": "",
+                "logo_url": None,
                 "profile_level": "None",
                 "profile_year":  None,
                 "profile_link": "https://www.guidestar.org/profile/47-3369805",
-                "profile_logo": "",
-                "leader_name": "",
-                "leader_title": "",
-                "contact_name": "",
-                "contact_email": "",
-                "contact_phone": "",
-                "contact_title": "",
-                "number_of_employees": "",
+                "profile_logo": None,
+                "leader_name": None,
+                "leader_title": None,
+                "contact_name": None,
+                "contact_email": None,
+                "contact_phone": None,
+                "contact_title": None,
+                "number_of_employees": None,
                 "ruling_year": 2015
             },
             "properties": {
@@ -673,7 +675,7 @@ sample_response = {
             },
             "geography": {
                 "address_line_1": "441 NE 52nd St",
-                "address_line_2": "",
+                "address_line_2": None,
                 "city": "Miami",
                 "state": "FL",
                 "zip": "33137",
@@ -720,9 +722,9 @@ sample_response = {
                 "a_133_audit_performed": False
             },
             "dates": {
-                "seal_last_modified": "",
-                "profile_last_modified": "",
-                "dei_last_modified": "",
+                "seal_last_modified": None,
+                "profile_last_modified": None,
+                "dei_last_modified": None,
                 "financials_last_modified": "2023-05-18T17:01:47.0000000",
                 "last_modified": "2023-05-18T17:01:47.0000000"
             }
@@ -730,6 +732,9 @@ sample_response = {
     ]
 }
 
+json_response = json.dumps(sample_response)
+
+print(json_response)
 # Example categories to seed
 categories = ["education", "animals", "health"]
 # candid.seed_nonprofits(categories)
@@ -737,13 +742,13 @@ categories = ["education", "animals", "health"]
 
 # recordTrans = candid._transform_record(sample_response["hits"][1]) #["organization"])
 # print(recordTrans)
-for hit in sample_response["hits"]:
-    ## addRec = candid._add_single_nonprofit(hit)
-    ## print(f"Added: {addRec} to DB")
+for hit in json.loads(json_response)['hits']:
+    addRec = candid._add_single_nonprofit(hit)
+    print(f"Added: {addRec} to DB")
 
     # first test
-    transObj = candid._transform_record(hit)
-    print(candid.check_nonprofit_exists_in_db(transObj["ein"]), transObj["ein"], transObj["name"])
+    # transObj = candid._transform_record(hit)
+    # print(candid.check_nonprofit_exists_in_db(transObj["ein"]), transObj["ein"], transObj["name"])
 
 # addRec = candid._add_single_nonprofit(sample_response["hits"][0]) #["organization"])
 # print(addRec)
