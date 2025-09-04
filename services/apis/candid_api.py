@@ -36,9 +36,16 @@ class CandidEssentialsAPI:
         resp = requests.get(url, headers=self.headers, params=params)
         resp.raise_for_status()
         data = resp.json()
-        return data.get("organizations", [])
+        return data.get("hits", [])
+    
+    def check_nonprofit_exists_in_db(self, ein: str) -> bool:
+        """Check if a nonprofit exists in the DB by EIN"""
+        existing = db.get_nonprofit_by_ein(ein=ein)
+        existenceCheck = True if (existing and len(existing) > 0) else False
+        print("Existing in DB check for EIN", ein, ":", existenceCheck)
+        return existenceCheck
 
-    def seed_nonprofits(self, queries: List[str], max_per_query: int = 50):
+    def _seed_nonprofits(self, queries: List[str], max_per_query: int = 50):
         """Fetch nonprofits for each query and add to DB"""
         for q in queries:
             offset = 0
@@ -48,7 +55,9 @@ class CandidEssentialsAPI:
                     break
                 for record in records:
                     nonprofit_obj = self._transform_record(record)
-                    db.add_nonprofit(nonprofit_obj)
+                    in_existing = self.check_nonprofit_exists_in_db(nonprofit_obj["ein"])
+                    if not in_existing:
+                        db.add_nonprofit(nonprofit_obj)
                 offset += len(records)
 
     def _transform_record(self, record: Dict) -> Dict:
@@ -84,4 +93,9 @@ class CandidEssentialsAPI:
     def _add_single_nonprofit(self, record: Dict) -> Dict:
         """Add a single nonprofit to the DB"""
         nonprofit_obj = self._transform_record(record)
+        exists_in_db = self.check_nonprofit_exists_in_db(nonprofit_obj["ein"])
+        if exists_in_db:
+            return {"status": "exists", "message": "Nonprofit already exists in DB"}
         return db.add_nonprofit(nonprofit_obj)
+    
+
