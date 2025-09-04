@@ -732,9 +732,167 @@ sample_response = {
     ]
 }
 
-json_response = json.dumps(sample_response)
+sample_response_2 = {
+    "code": 200,
+    "message": "Request was processed successfully!",
+    "took": 14,
+    "time": "2024-02-12 18:46:03Z",
+    "results_count": 1,
+    "page_count": 1,
+    "errors": [],
+    "hits": [
+        {
+            "organization": {
+                "organization_id": "6908410",
+                "ein": "13-2875808",
+                "organization_name": "Human Rights Watch, Inc.",
+                "also_known_as": "HRW",
+                "group_exemption": "0000",
+                "mission": "Human Rights Watch defends the rights of people worldwide. We scrupulously investigate abuses, expose the facts widely, and pressure those with power to respect rights and secure justice. Human Rights Watch is an independent, international organization that works as part of a vibrant movement to uphold human dignity and advance the cause of human rights for all.",
+                "website_url": "www.hrw.org",
+                "logo_url": "https://www.guidestar.org/ViewEdoc.aspx?eDocId=9653361&approved=True",
+                "profile_level": "Platinum",
+                "profile_year": 2023,
+                "profile_link": "https://www.guidestar.org/profile/13-2875808",
+                "profile_logo": "https://www.guidestar.org/App_Themes/MainSite2/images/ProfilePageSvgs/profile-PLATINUM2023-seal.svg",
+                "leader_name": "Tirana Hassan",
+                "leader_title": "Executive Director",
+                "contact_name": "Tirana Hassan",
+                "contact_email": "hrwpress@hrw.org",
+                "contact_phone": "(212) 290-4700",
+                "contact_title": "Executive Director",
+                "number_of_employees": "378",
+                "ruling_year": 1976
+            },
+            "properties": {
+                "bmf_status": True,
+                "pub78_verified": True,
+                "allow_online_giving": True,
+                "dei_submitted": True,
+                "revoked": False,
+                "defunct_or_merged": False,
+                "relationship_type": {
+                    "parent": False,
+                    "subordinate": False,
+                    "independent": True,
+                    "headquarters": False
+                }
+            },
+            "geography": {
+                "address_line_1": "350 5th Ave Fl 34",
+                "address_line_2": None,
+                "city": "New York City",
+                "state": "NY",
+                "zip": "10118",
+                "msa": "NY - New York, NY-NJ",
+                "congressional_district": "District 12, NY",
+                "county": "New York, NY",
+                "latitude": 40.7484,
+                "longitude": -73.9846
+            },
+            "taxonomies": {
+                "subject_codes": [
+                    {
+                        "subject_code": "SR000000",
+                        "subject_code_description": "Human rights"
+                    }
+                ],
+                "population_served_codes": [
+                    {
+                        "population_served_code": "PG060000",
+                        "population_served_description": "Victims and oppressed people"
+                    },
+                    {
+                        "population_served_code": "PG040000",
+                        "population_served_description": "Incarcerated people"
+                    },
+                    {
+                        "population_served_code": "PG030200",
+                        "population_served_description": "Low-income people"
+                    },
+                    {
+                        "population_served_code": "PG030000",
+                        "population_served_description": "Economically disadvantaged people"
+                    },
+                    {
+                        "population_served_code": "PG010100",
+                        "population_served_description": "Immigrants"
+                    },
+                    {
+                        "population_served_code": "PG010000",
+                        "population_served_description": "Immigrants and migrants"
+                    },
+                    {
+                        "population_served_code": "PG000000",
+                        "population_served_description": "Social and economic status"
+                    },
+                    {
+                        "population_served_code": "PC040000",
+                        "population_served_description": "Women and girls"
+                    },
+                    {
+                        "population_served_code": "PC010000",
+                        "population_served_description": "LGBTQ people"
+                    },
+                    {
+                        "population_served_code": "PC000000",
+                        "population_served_description": "Sexual identity"
+                    },
+                    {
+                        "population_served_code": "PA020000",
+                        "population_served_description": "Adults"
+                    },
+                    {
+                        "population_served_code": "PA010000",
+                        "population_served_description": "Children and youth"
+                    },
+                    {
+                        "population_served_code": "PA000000",
+                        "population_served_description": "Age groups"
+                    }
+                ],
+                "ntee_codes": [
+                    {
+                        "ntee_code": "Q70",
+                        "ntee_code_description": "International Human Rights"
+                    }
+                ],
+                "subsection_code": {
+                    "subsection_code": "03",
+                    "subsection_code_description": "501(c)(3) Public Charity"
+                },
+                "foundation_code": {
+                    "foundation_code": "15",
+                    "foundation_code_description": "Organization which receives a substantial part of its support from a governmental unit or the general public"
+                }
+            },
+            "financials": {
+                "most_recent_year": {
+                    "form_type": "990",
+                    "fiscal_year": 2022,
+                    "total_revenue": 93499541.0,
+                    "total_expenses": 92236869.0,
+                    "total_assets": 224270259.0
+                },
+                "bmf_gross_receipts": 93499541.0,
+                "bmf_assets": 224270259.0,
+                "required_to_file_990t": True,
+                "a_133_audit_performed": False
+            },
+            "dates": {
+                "seal_last_modified": "2023-11-01T16:45:02.0000000",
+                "profile_last_modified": "2023-11-06T09:32:45.0000000",
+                "dei_last_modified": "2023-08-17T00:00:00.0000000",
+                "financials_last_modified": "2023-06-23T09:00:47.0000000",
+                "last_modified": "2023-12-13T16:37:00.0000000"
+            }
+        }
+    ]
+}
 
-print(json_response)
+json_response = json.dumps(sample_response_2)
+
+# print(json_response)
 # Example categories to seed
 categories = ["education", "animals", "health"]
 # candid.seed_nonprofits(categories)
@@ -744,7 +902,7 @@ categories = ["education", "animals", "health"]
 # print(recordTrans)
 for hit in json.loads(json_response)['hits']:
     addRec = candid._add_single_nonprofit(hit)
-    print(f"Added: {addRec} to DB")
+    print(f"Added: {addRec[0].get('name')} to DB")
 
     # first test
     # transObj = candid._transform_record(hit)

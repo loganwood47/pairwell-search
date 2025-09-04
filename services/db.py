@@ -22,14 +22,12 @@ def get_nonprofits(limit: int = 1000):
 
 def get_nonprofit_by_ein(limit: int = 1000, ein: str = ""):
     """Fetch nonprofits from DB"""
-    # resp = supabase.table("nonprofits").select("*").eq("ein", ein).limit(limit).execute()
     resp = supabase.table("nonprofits").select("*").eq("ein", ein).limit(limit).execute()
     return resp.data
 
 def add_nonprofit(nonprofit: dict):
     """Save a new nonprofit"""
     resp = supabase.table("nonprofits").insert(nonprofit).execute()
-    print(resp)
     return resp.data
 
 

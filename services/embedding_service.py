@@ -34,7 +34,7 @@ def embed_user_profile(profile: dict) -> np.ndarray:
     """Turn structured user data into text and embed"""
     profile_text = (
         f"User located in {profile.get('geography', '')}, "
-        f"income {profile.get('income', '')}, "
-        f"mission statement is {profile.get('interests', '')}"
+        # f"income {profile.get('income', '')}, "
+        f"mission statement: {profile.get('interests', '')}"
     )
     return embed_texts([profile_text])[0]
