@@ -1,5 +1,6 @@
 import streamlit as st
 from services import db, embedding_service, similarity, recommend, visualize, interest_expansion
+import pandas as pd
 
 debug = st.toggle("Debug Mode", False)
 if debug:
@@ -48,29 +49,44 @@ if st.button("Find Recommendations"):
         profile = {"geography": geo, "income": income, "interests": expanded_interests}
         user_vec = embedding_service.embed_user_profile(profile)
 
-        # Step 2: Fetch nonprofits & embed
+        # Fetch nonprofits & embed
         nonprofits = db.get_nonprofits()
         texts = [n["mission"] for n in nonprofits]
         nonprofits_by_id = {n["id"]: n for n in nonprofits}
         nonprofit_vecs = embedding_service.embed_texts(texts)
         # nonprofit_vecs = embedding_service.embed_nonprofit_profiles(nonprofits)
 
-        # Step 3: Build vector index
+        # Build vector index
         vs = similarity.VectorSearch(nonprofit_vecs.shape[1])
         vs.add_vectors(nonprofit_vecs, [n["id"] for n in nonprofits])
 
-        # Step 4: Recommend
+        # Recommend
         results = recommend.get_recommendations(user_vec, vs)
 
         st.title("Top Recommended Nonprofits:")
+
+        data = []
         for r in results:
             np_info = nonprofits_by_id[r["id"]]
-            st.write(f"**{np_info['name']}** – Mission: {np_info['mission']} - **Score: {r['score']:.3f}**")
-            if np_info.get("logo_url"):
-                st.image(np_info.get("logo_url"), width=100)
-                st.markdown(f"[Visit Website]({np_info.get('website')})")
-                # TODO: fix candid image URLs
-                # TODO: show as table, clean up layout
+            data.append({
+            "Nonprofit Name": np_info['name'],
+            "Mission": np_info['mission'],
+            "Logo": np_info.get("logo_url"),
+            "Website": np_info.get('website'),
+            "Score": r['score']
+            })
+
+        df = pd.DataFrame(data)
+
+        st.dataframe(df,
+                     column_config={
+                         "Nonprofit Name": st.column_config.TextColumn("Nonprofit Name"),
+                         "Mission": st.column_config.TextColumn("Mission"),
+                         "Logo": st.column_config.ImageColumn("Logo", width=100),
+                         "Website": st.column_config.LinkColumn("Website"),
+                         "Score": st.column_config.NumberColumn("Score", format="%.4f")
+                     },
+                     hide_index=False)
                 
 
         # Optional: visualize embeddings
