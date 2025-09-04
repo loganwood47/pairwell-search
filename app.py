@@ -53,6 +53,7 @@ if st.button("Find Recommendations"):
         texts = [n["mission"] for n in nonprofits]
         nonprofits_by_id = {n["id"]: n for n in nonprofits}
         nonprofit_vecs = embedding_service.embed_texts(texts)
+        # nonprofit_vecs = embedding_service.embed_nonprofit_profiles(nonprofits)
 
         # Step 3: Build vector index
         vs = similarity.VectorSearch(nonprofit_vecs.shape[1])
@@ -65,7 +66,12 @@ if st.button("Find Recommendations"):
         for r in results:
             np_info = nonprofits_by_id[r["id"]]
             st.write(f"**{np_info['name']}** – Mission: {np_info['mission']} - **Score: {r['score']:.3f}**")
-            st.image(np_info.get("logo_url") if np_info.get("logo_url") else None, width=100)
+            if np_info.get("logo_url"):
+                st.image(np_info.get("logo_url"), width=100)
+                st.markdown(f"[Visit Website]({np_info.get('website')})")
+                # TODO: fix candid image URLs
+                # TODO: show as table, clean up layout
+                
 
         # Optional: visualize embeddings
         # visualize.plot_embeddings(nonprofit_vecs, [n["name"] for n in nonprofits])
