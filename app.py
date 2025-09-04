@@ -65,6 +65,7 @@ if st.button("Find Recommendations"):
         for r in results:
             np_info = nonprofits_by_id[r["id"]]
             st.write(f"**{np_info['name']}** – Mission: {np_info['mission']} - **Score: {r['score']:.3f}**")
+            st.image(np_info.get("logo_url") if np_info.get("logo_url") else None, width=100)
 
         # Optional: visualize embeddings
         # visualize.plot_embeddings(nonprofit_vecs, [n["name"] for n in nonprofits])
