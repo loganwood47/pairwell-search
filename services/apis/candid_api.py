@@ -17,7 +17,23 @@ def update_api_call_count_in_file(filename: str) -> int:
         f.write(str(count))
     return count
 
+def clean_record(record: dict) -> dict:
+    """Recursively clean dict: convert empty strings to None."""
+    cleaned = {}
+    for k, v in record.items():
+        if isinstance(v, str) and v.strip() == "":
+            cleaned[k] = None
+        elif isinstance(v, dict):
+            cleaned[k] = clean_record(v)
+        elif isinstance(v, list):
+            cleaned[k] = [clean_record(i) if isinstance(i, dict) else i for i in v]
+        else:
+            cleaned[k] = v
+    return cleaned
+
+
 class CandidEssentialsAPI:
+    """Client for Candid Essentials API"""
     # TODO: refactor out different API clients
     BASE_URL = "https://api.candid.org/essentials/v3"
 
@@ -124,22 +140,36 @@ class CandidEssentialsAPI:
     def _add_single_nonprofit(self, record: Dict) -> list[Dict]:
         """Add a single nonprofit to the DB"""
         nonprofit_obj = self._transform_record(record)
+        nonprofit_obj = clean_record(nonprofit_obj)
         exists_in_db = self.check_nonprofit_exists_in_db(nonprofit_obj["ein"])
         if exists_in_db:
             return [{"status": "exists", "message": "Nonprofit already exists in DB"}]
+        print("Adding nonprofit to DB:", nonprofit_obj["name"], "EIN:", nonprofit_obj["ein"])
         return db.add_nonprofit(nonprofit_obj)
     
-    def _seed_nonprofits(self, queries: List[str], max_per_query: int = 50):
+    def _seed_nonprofits(self, queries: List[str], max_per_query: int = 50, geo_filter: Dict = None):
         """Uses Candid API, fetch nonprofits for each query and add to DB"""
         for q in queries:
             offset = 0
             while True:
-                records = self.search_nonprofits(q, limit=max_per_query, offset=offset)
+                print("Fetching nonprofits for query:", q, "offset:", offset)
+                records = self.search_nonprofits(
+                    query=q, 
+                    states=geo_filter.get("states") if geo_filter else None,
+                    metros=geo_filter.get("metros") if geo_filter else None,
+                    cities=geo_filter.get("cities") if geo_filter else None,
+                    counties=geo_filter.get("counties") if geo_filter else None,
+                    zip=geo_filter.get("zip") if geo_filter else None,
+                    radius=geo_filter.get("radius") if geo_filter else None,
+                    limit=max_per_query, 
+                    offset=offset)
                 if not records:
                     break
                 for record in records:
                     self._add_single_nonprofit(record)
                 offset += len(records)
+                if offset >= 75:
+                    break
 
 
     
