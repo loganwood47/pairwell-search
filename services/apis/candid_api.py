@@ -1,4 +1,5 @@
 import requests
+import time
 from typing import List, Dict
 from .. import db
 # TODO: add graphql client for Candid taxonomy api
@@ -15,6 +16,15 @@ def update_api_call_count_in_file(filename: str) -> int:
     count += 1
     with open(filename, 'w') as f:
         f.write(str(count))
+    return count
+
+def get_api_call_count_from_file(filename: str) -> int:
+    """Utility to get current API call count from a file"""
+    try:
+        with open(filename, 'r') as f:
+            count = int(f.read().strip())
+    except FileNotFoundError:
+        count = 0
     return count
 
 def clean_record(record: dict) -> dict:
@@ -37,6 +47,8 @@ class CandidEssentialsAPI:
     # TODO: refactor out different API clients
     BASE_URL = "https://api.candid.org/essentials/v3"
 
+    API_CALL_COUNTER_FILE = 'services/data_pulls/essentials_api_call_count.txt'
+
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.headers = {
@@ -50,10 +62,13 @@ class CandidEssentialsAPI:
         """Fetch a single nonprofit by EIN"""
         url = f"{self.BASE_URL}"
         params = {
-            "search_terms": ein
+            "search_terms": ein,
+            "from": 0,
+            "size": 1
             }
-        resp = requests.get(url, headers=self.headers, params=params)
+        resp = requests.post(url, headers=self.headers, json=params)
         resp.raise_for_status()
+        update_api_call_count_in_file(self.API_CALL_COUNTER_FILE)
         return resp.json()
 
     def search_nonprofits(
@@ -97,7 +112,7 @@ class CandidEssentialsAPI:
         resp = requests.post(url, headers=self.headers, json=params)
         resp.raise_for_status()
         data = resp.json()
-        update_api_call_count_in_file('services/data_pulls/essentials_api_call_count.txt')
+        update_api_call_count_in_file(self.API_CALL_CALL_COUNTER_FILE)
         return data.get("hits", [])
     
     def check_nonprofit_exists_in_db(self, ein: str) -> bool:
@@ -150,6 +165,10 @@ class CandidEssentialsAPI:
     def _seed_nonprofits(self, queries: List[str], max_per_query: int = 50, geo_filter: Dict = None):
         """Uses Candid API, fetch nonprofits for each query and add to DB"""
         for q in queries:
+            total_calls = get_api_call_count_from_file(self.API_CALL_COUNTER_FILE)
+            if total_calls >= 74:
+                print("API call limit reached, stopping further calls.")
+                break
             offset = 0
             while True:
                 print("Fetching nonprofits for query:", q, "offset:", offset)
@@ -163,6 +182,7 @@ class CandidEssentialsAPI:
                     radius=geo_filter.get("radius") if geo_filter else None,
                     limit=max_per_query, 
                     offset=offset)
+                time.sleep(6) # rate limit handling, max 10 calls/min
                 if not records:
                     break
                 for record in records:
