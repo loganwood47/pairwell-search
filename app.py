@@ -29,9 +29,9 @@ if debug:
 
     nonprofits = db.get_nonprofits()
 
-    st.write("Current Nonprofits in DB:")
-    for np in nonprofits:
-        st.write(f"- {np['name']} ({np['city']}, {np['state']}, {np['mission']})")
+    # st.write("Current Nonprofits in DB:")
+    # for np in nonprofits:
+    #     st.write(f"- {np['name']} ({np['city']}, {np['state']}, {np['mission']})")
 
 st.title("Nonprofit Recommender")
 
