@@ -112,7 +112,7 @@ class CandidEssentialsAPI:
         resp = requests.post(url, headers=self.headers, json=params)
         resp.raise_for_status()
         data = resp.json()
-        update_api_call_count_in_file(self.API_CALL_CALL_COUNTER_FILE)
+        update_api_call_count_in_file(self.API_CALL_COUNTER_FILE)
         return data.get("hits", [])
     
     def check_nonprofit_exists_in_db(self, ein: str) -> bool:
@@ -162,11 +162,11 @@ class CandidEssentialsAPI:
         print("Adding nonprofit to DB:", nonprofit_obj["name"], "EIN:", nonprofit_obj["ein"])
         return db.add_nonprofit(nonprofit_obj)
     
-    def _seed_nonprofits(self, queries: List[str], max_per_query: int = 50, geo_filter: Dict = None):
+    def _seed_nonprofits(self, queries: List[str], max_per_query: int = 50, geo_filter: Dict = None, total_call_cap: int = 100):
         """Uses Candid API, fetch nonprofits for each query and add to DB"""
         for q in queries:
             total_calls = get_api_call_count_from_file(self.API_CALL_COUNTER_FILE)
-            if total_calls >= 74:
+            if total_calls >= total_call_cap:
                 print("API call limit reached, stopping further calls.")
                 break
             print("Starting fetch for query:", q)
