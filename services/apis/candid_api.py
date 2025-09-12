@@ -169,6 +169,7 @@ class CandidEssentialsAPI:
             if total_calls >= 74:
                 print("API call limit reached, stopping further calls.")
                 break
+            print("Starting fetch for query:", q)
             offset = 0
             while True:
                 print("Fetching nonprofits for query:", q, "offset:", offset)
