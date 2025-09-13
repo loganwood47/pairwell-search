@@ -43,7 +43,6 @@ networkx==3.4.2
 numba==0.61.2
 numpy==2.2.6
 packaging==25.0
--e git+https://github.com/loganwood47/pairwell-search.git@a4e24f400998c85c9b1098a2596a0eb292e80bb6#egg=pairwell_search
 pandas==2.3.2
 pillow==11.3.0
 pluggy==1.6.0
