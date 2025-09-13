@@ -24,9 +24,9 @@ def expand_interest(interest: str) -> str:
         # "temperature": 0.7
     })
     response = requests.post(OPENROUTER_URL, data=payload, headers=headers)
-    print("Raw response:", response.text)
+    # print("Raw response:", response.text)
 
-    print("Final output:", response.json())
+    # print("Final output:", response.json())
     response.raise_for_status()
     resp_json = response.json()
     return resp_json["choices"][0]["message"]["content"].strip()
