@@ -29,8 +29,48 @@ search_cats = [
     # 'culture', 
     # 'human rights', 
     # 'disaster relief', 
-    'social justice',
-    'youth development'
+    # 'social justice',
+    # 'youth development'
+    'habitat restoration',
+    'ocean conservation',
+    'marine conservation',
+    'watershed protection',
+    'river conservation',
+    'reforestation',
+    'biodiversity',
+    'sustainable agriculture',
+    'civic engagement',
+    'community development',
+    'economic development',
+    'workforce development',
+    'financial literacy',
+    'legal aid',
+    'criminal justice reform',
+    'immigrant services',
+    'refugee assistance',
+    'veteran affairs',
+    'senior services',
+    'disability rights',
+    'women\'s empowerment',
+    'LGBTQ+ services',
+    'international development',
+    'peacebuilding',
+    'public policy',
+    'scientific research',
+    'medical research',
+    'technology access',
+    'historic preservation',
+    'public broadcasting',
+    'journalism',
+    'consumer protection',
+    'volunteerism',
+    'land trust',
+    'environmental justice',
+    'environmental law',
+    'park stewardship',
+    'botanical gardens',
+    'pollinator protection',
+    'endangered species'
     ]
 
 # search_cats = [ 
@@ -51,6 +91,6 @@ geoObj = { # Optional geo filter
     # "metros": ["Miami"]
 }
 
-result = candid._seed_nonprofits(queries=search_cats, geo_filter=geoObj, total_call_cap=100)
+result = candid._seed_nonprofits(queries=search_cats, geo_filter=geoObj, total_call_cap=250)
 
 
