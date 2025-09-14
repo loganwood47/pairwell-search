@@ -2,6 +2,7 @@ import requests
 import time
 from typing import List, Dict
 from .. import db
+from services.embedding_service import embed_texts
 # TODO: add graphql client for Candid taxonomy api
 # TODO: normalize NP database, split nonprofit into multiple tables (geo, codes, financials etc)
 
@@ -160,7 +161,17 @@ class CandidEssentialsAPI:
         if exists_in_db:
             return [{"status": "exists", "message": "Nonprofit already exists in DB"}]
         print("Adding nonprofit to DB:", nonprofit_obj["name"], "EIN:", nonprofit_obj["ein"])
-        return db.add_nonprofit(nonprofit_obj)
+        inserted = db.add_nonprofit(nonprofit_obj)[0]
+
+        if inserted and inserted.get("id"):
+            mission = nonprofit_obj.get("mission", "")
+            if mission:
+                vector = embed_texts([mission])[0]  # embed_texts returns array of arrays
+                print("Storing vector for nonprofit ID:", inserted["id"])
+                db.store_nonprofit_vector(inserted["id"], vector)
+                return [{"status": "inserted", "id": inserted["id"], "message": "Nonprofit and vector added"}]
+            return [{"status": "inserted", "message": "Nonprofit added but no mission to embed"}]
+        return [{"status": "error", "message": "Failed to add nonprofit"}]
     
     def _seed_nonprofits(self, queries: List[str], max_per_query: int = 50, geo_filter: Dict = None, total_call_cap: int = 100):
         """Uses Candid API, fetch nonprofits for each query and add to DB"""

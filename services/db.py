@@ -87,7 +87,7 @@ def store_nonprofit_vector(nonprofit_id: str, vector: list[float]) -> dict:
         vector = vector.tolist()
     response = (
         supabase.table("nonprofit_mission_vectors")
-        .upsert({"nonprofit_id": nonprofit_id, "embedding": vector})
+        .upsert({"nonprofit_id": nonprofit_id, "vector": vector})
         .execute()
     )
     return response.data

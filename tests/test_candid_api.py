@@ -190,15 +190,57 @@ class TestCandidEssentialsAPI(unittest.TestCase):
     @patch("services.apis.candid_api.CandidEssentialsAPI.check_nonprofit_exists_in_db")
     @patch("services.apis.candid_api.clean_record")
     @patch("services.apis.candid_api.CandidEssentialsAPI._transform_record")
-    def test_add_single_nonprofit_new(self, mock_transform, mock_clean, mock_check, mock_add):
+    def test_add_single_nonprofit_exists(self, mock_transform, mock_clean, mock_check, mock_add):
         mock_transform.return_value = {"ein": "123", "name": "Test Org"}
         mock_clean.return_value = {"ein": "123", "name": "Test Org"}
-        mock_check.return_value = False
-        mock_add.return_value = [{"status": "ok"}]
+        mock_check.return_value = True  # already exists
 
         result = self.api._add_single_nonprofit({"org": "raw"})
-        self.assertEqual(result, [{"status": "ok"}])
+        self.assertEqual(result, [{"status": "exists", "message": "Nonprofit already exists in DB"}])
+        mock_add.assert_not_called()
+
+    @patch("services.apis.candid_api.db.add_nonprofit")
+    @patch("services.apis.candid_api.CandidEssentialsAPI.check_nonprofit_exists_in_db")
+    @patch("services.apis.candid_api.clean_record")
+    @patch("services.apis.candid_api.CandidEssentialsAPI._transform_record")
+    def test_add_single_nonprofit_new_no_mission(self, mock_transform, mock_clean, mock_check, mock_add):
+        mock_transform.return_value = {"ein": "123", "name": "Test Org"}
+        mock_clean.return_value = {"ein": "123", "name": "Test Org"}  # no mission field
+        mock_check.return_value = False
+        mock_add.return_value = [{"id": "abc123", "ein": "123", "name": "Test Org"}]
+
+        result = self.api._add_single_nonprofit({"org": "raw"})
+        self.assertEqual(
+            result,
+            [{"status": "inserted", "message": "Nonprofit added but no mission to embed"}],
+        )
         mock_add.assert_called_once()
+
+    @patch("services.apis.candid_api.db.store_nonprofit_vector")
+    @patch("services.apis.candid_api.embed_texts")
+    @patch("services.apis.candid_api.db.add_nonprofit")
+    @patch("services.apis.candid_api.CandidEssentialsAPI.check_nonprofit_exists_in_db")
+    @patch("services.apis.candid_api.clean_record")
+    @patch("services.apis.candid_api.CandidEssentialsAPI._transform_record")
+    def test_add_single_nonprofit_new_with_mission(
+        self, mock_transform, mock_clean, mock_check, mock_add, mock_embed, mock_store
+    ):
+        mock_transform.return_value = {"ein": "123", "name": "Test Org", "mission": "Do good"}
+        mock_clean.return_value = {"ein": "123", "name": "Test Org", "mission": "Do good"}
+        mock_check.return_value = False
+        mock_add.return_value = [{"id": "abc123", "ein": "123", "name": "Test Org", "mission": "Do good"}]
+
+        mock_embed.return_value = [[0.1, 0.2, 0.3]]  # pretend embedding
+        mock_store.return_value = {"status": "ok"}
+
+        result = self.api._add_single_nonprofit({"org": "raw"})
+        self.assertEqual(
+            result,
+            [{"status": "inserted", "id": "abc123", "message": "Nonprofit and vector added"}],
+        )
+        mock_add.assert_called_once()
+        mock_embed.assert_called_once_with(["Do good"])
+        mock_store.assert_called_once_with("abc123", [0.1, 0.2, 0.3])
 
     @patch("services.apis.candid_api.get_api_call_count_from_file")
     @patch("services.apis.candid_api.CandidEssentialsAPI.search_nonprofits")
