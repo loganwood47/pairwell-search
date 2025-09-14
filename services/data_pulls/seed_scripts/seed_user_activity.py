@@ -4,18 +4,29 @@ Synthetic multi-step activity generator for users <-> nonprofits
 """
 
 import random
-from db import supabase, get_engagement_types, get_users, get_nonprofits
+import numpy as np
+from db import supabase, get_user_vector, get_nonprofit_vector
 
-# --- Generator ---
+
+def cosine_similarity(vec1, vec2):
+    if vec1 is None or vec2 is None:
+        return 0.0
+    v1, v2 = np.array(vec1), np.array(vec2)
+    denom = (np.linalg.norm(v1) * np.linalg.norm(v2)) + 1e-8
+    return float(np.dot(v1, v2) / denom)
+
+
 def generate_activity_sequence(user_id, nonprofit_id, engagement_types):
-    """
-    Always logs a View, then probabilistically logs Click/Share/Donate/Volunteer.
-    Returns a list of activities (dicts).
-    """
+    """Generate activity sequence weighted by similarity between user & nonprofit."""
+
+    user_vec = get_user_vector(user_id)
+    nonprofit_vec = get_nonprofit_vector(nonprofit_id)
+    sim = cosine_similarity(user_vec, nonprofit_vec)
+    prob_factor = max(0.0, (sim + 1.0) / 2.0)  # scale -1..1 → 0..1
 
     activities = []
 
-    # Always start with a View
+    # Always View
     et_view = engagement_types["View"]
     activities.append({
         "user_id": user_id,
@@ -24,17 +35,17 @@ def generate_activity_sequence(user_id, nonprofit_id, engagement_types):
         "weight": et_view["weight"],
     })
 
-    # Then maybe upgrade
-    if random.random() < 0.2:  # 20% chance of Click after View
+    # Probability ladder
+    if random.random() < 0.05 + 0.5 * prob_factor:
         et_click = engagement_types["Click"]
         activities.append({
             "user_id": user_id,
             "nonprofit_id": nonprofit_id,
             "engagement_type_id": et_click["id"],
-            "weight": et_click["train_weight"],
+            "weight": et_click["weight"],
         })
 
-        if random.random() < 0.1:  # 10% chance of Share after Click
+        if random.random() < 0.01 + 0.2 * prob_factor:
             et_share = engagement_types["Share"]
             activities.append({
                 "user_id": user_id,
@@ -43,16 +54,7 @@ def generate_activity_sequence(user_id, nonprofit_id, engagement_types):
                 "weight": et_share["train_weight"],
             })
 
-        if random.random() < 0.05:  # 5% chance of Donation after Click
-            et_donate = engagement_types["Donation"]
-            activities.append({
-                "user_id": user_id,
-                "nonprofit_id": nonprofit_id,
-                "engagement_type_id": et_donate["id"],
-                "weight": et_donate["train_weight"],
-            })
-
-        if random.random() < 0.02:  # 2% chance of Volunteering after Click
+        if random.random() < 0.002 + 0.1 * prob_factor:
             et_vol = engagement_types["Volunteer"]
             activities.append({
                 "user_id": user_id,
@@ -61,25 +63,13 @@ def generate_activity_sequence(user_id, nonprofit_id, engagement_types):
                 "weight": et_vol["train_weight"],
             })
 
+        if random.random() < 0.005 + 0.05 * prob_factor:
+            et_donate = engagement_types["Donation"]
+            activities.append({
+                "user_id": user_id,
+                "nonprofit_id": nonprofit_id,
+                "engagement_type_id": et_donate["id"],
+                "weight": et_donate["train_weight"],
+            })
+
     return activities
-
-
-def seed_user_activity(num_users=500, nonprofits_per_user=20):
-    users = get_users(limit=num_users)
-    nonprofits = get_nonprofits(limit=2000)
-    engagement_types = get_engagement_types()
-
-    total = 0
-    for user in users:
-        chosen_nonprofits = random.sample(nonprofits, nonprofits_per_user)
-        for np in chosen_nonprofits:
-            activities = generate_activity_sequence(user["id"], np["id"], engagement_types)
-            for act in activities:
-                supabase.table("user_activity").insert(act).execute()
-                total += 1
-
-    print(f"Seeded {total} user_activity rows across {num_users} users.")
-
-
-if __name__ == "__main__":
-    seed_user_activity(num_users=500, nonprofits_per_user=20)
