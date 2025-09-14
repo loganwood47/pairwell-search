@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 from supabase import create_client, Client
 import numpy as np
+import json
 
 load_dotenv()
 
@@ -71,12 +72,15 @@ def get_user_vector(user_id: str) -> list[float] | None:
     """Fetch a user's embedding vector by ID."""
     response = (
         supabase.table("user_interest_vectors")
-        .select("embedding")
+        .select("vector")
         .eq("user_id", user_id)
         .execute()
     )
     if response.data:
-        return response.data[0]["embedding"]
+        vector = response.data[0]["vector"]
+        if isinstance(vector, str):
+            vector = json.loads(vector)  # convert string → list
+        return vector
     return None
 
 
@@ -97,12 +101,15 @@ def get_nonprofit_vector(nonprofit_id: str) -> list[float] | None:
     """Fetch a nonprofit's embedding vector by ID."""
     response = (
         supabase.table("nonprofit_mission_vectors")
-        .select("embedding")
+        .select("vector")
         .eq("nonprofit_id", nonprofit_id)
         .execute()
     )
     if response.data:
-        return response.data[0]["embedding"]
+        vector = response.data[0]["vector"]
+        if isinstance(vector, str):
+            vector = json.loads(vector)  # convert string → list
+        return vector
     return None
 
 def get_users(limit: int = 1000):
