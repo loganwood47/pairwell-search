@@ -33,7 +33,7 @@ def create_missing_np_vectors(batch_size=500):
 
         # Store results
         rows = [
-            {"user_id": user["id"], "vector": vector.tolist()}
+            {"nonprofit_id": user["id"], "vector": vector.tolist()}
             for user, vector in zip(users, vectors)
         ]
 
