@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from services.db import supabase
+from services.embedding_service import embed_texts
 import numpy as np
 
 # -----------------------------
@@ -125,6 +126,10 @@ def train_two_tower(train_loader, num_users, num_nonprofits,
 # Preprocessing
 # -----------------------------
 def normalize_column(values):
+    """Convert list of values to normalized numpy array"""
+    if type(values[0]) in [str, bytes]:
+        # TODO: fix this, gives error
+        values = embed_texts([str(v) for v in values])
     arr = np.array(values, dtype=np.float32)
     arr = np.nan_to_num(arr, nan=0.0)
     if arr.std() > 0:
@@ -132,27 +137,32 @@ def normalize_column(values):
     return arr
 
 def fetch_user_features():
-    resp = supabase.table("users").select("id,income,donation_budget").execute()
+    resp = supabase.table("users").select("id,income,donation_budget,city,state,interests,engagement_prefs").execute()
     rows = resp.data
     incomes = normalize_column([r["income"] or 0 for r in rows])
     budgets = normalize_column([r["donation_budget"] or 0 for r in rows])
+    cities = normalize_column([r["city"] or 0 for r in rows])
+    states = normalize_column([r["state"] or 0 for r in rows])
+    interests = normalize_column([r["interests"] or 0 for r in rows])
+    engagement_prefs = normalize_column([r["engagement_prefs"] or 0 for r in rows])
 
     features = {}
-    for r, inc, bud in zip(rows, incomes, budgets):
-        features[int(r["id"])] = np.array([inc, bud], dtype=np.float32)
+    for r, inc, bud, cit, st, intr, eng in zip(rows, incomes, budgets, cities, states, interests, engagement_prefs):
+        features[int(r["id"])] = np.array([inc, bud, cit, st, intr, eng], dtype=np.float32)
     return features
 
 def fetch_nonprofit_features():
-    resp = supabase.table("nonprofits").select("id,employee_count,total_revenue,latitude,longitude").execute()
+    resp = supabase.table("nonprofits").select("id,employee_count,total_revenue,city,state,mission").execute()
     rows = resp.data
     emp = normalize_column([r["employee_count"] or 0 for r in rows])
     rev = normalize_column([r["total_revenue"] or 0 for r in rows])
-    lat = normalize_column([r["latitude"] or 0 for r in rows])
-    lon = normalize_column([r["longitude"] or 0 for r in rows])
+    city = normalize_column([r["city"] or 0 for r in rows])
+    state = normalize_column([r["state"] or 0 for r in rows])
+    mission = normalize_column([r["mission"] or 0 for r in rows])
 
     features = {}
-    for r, e, re, la, lo in zip(rows, emp, rev, lat, lon):
-        features[int(r["id"])] = np.array([e, re, la, lo], dtype=np.float32)
+    for r, e, re, cit, stt, miss in zip(rows, emp, rev, city, state, mission):
+        features[int(r["id"])] = np.array([e, re, cit, stt, miss], dtype=np.float32)
     return features
 
 # -----------------------------
