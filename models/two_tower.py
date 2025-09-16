@@ -1,98 +1,189 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
+import torch.nn.functional as F
 from services.db import supabase
+import numpy as np
 
+# -----------------------------
+# Dataset wrapper
+# -----------------------------
+class InteractionDataset(torch.utils.data.Dataset):
+    def __init__(self, rows, user_features, nonprofit_features):
+        """
+        rows: list of dicts from interaction_training table
+        user_features: dict[user_id] -> np.array
+        nonprofit_features: dict[nonprofit_id] -> np.array
+        """
+        self.rows = rows
+        self.user_features = user_features
+        self.nonprofit_features = nonprofit_features
+
+    def __len__(self):
+        return len(self.rows)
+
+    def __getitem__(self, idx):
+        row = self.rows[idx]
+        u_id = int(row["user_id"])
+        n_id = int(row["nonprofit_id"])
+        label = float(row["label"])
+        weight = float(row["weight"])
+
+        u_feats = self.user_features.get(u_id, np.zeros(2, dtype=np.float32))
+        n_feats = self.nonprofit_features.get(n_id, np.zeros(4, dtype=np.float32))
+
+        return (
+            torch.tensor(u_id, dtype=torch.long),
+            torch.tensor(n_id, dtype=torch.long),
+            torch.tensor(u_feats, dtype=torch.float32),
+            torch.tensor(n_feats, dtype=torch.float32),
+            torch.tensor(label, dtype=torch.float32),
+            torch.tensor(weight, dtype=torch.float32),
+        )
+
+# -----------------------------
+# Two-Tower Model
+# -----------------------------
 class TwoTowerModel(nn.Module):
-    def __init__(self, num_users, num_nonprofits, embedding_dim=128):
+    def __init__(self,
+                 num_users: int,
+                 num_nonprofits: int,
+                 user_embed_dim: int = 32,
+                 nonprofit_embed_dim: int = 32,
+                 user_side_dim: int = 0,
+                 nonprofit_side_dim: int = 0):
         super().__init__()
-        self.user_emb = nn.Embedding(num_users, embedding_dim)
-        self.nonprofit_emb = nn.Embedding(num_nonprofits, embedding_dim)
-        self.dropout = nn.Dropout(0.2)
-        self.fc = nn.Linear(embedding_dim * 2, 1)
 
-    def forward(self, user_ids, nonprofit_ids):
-        u = self.user_emb(user_ids)
-        v = self.nonprofit_emb(nonprofit_ids)
-        x = torch.cat([u, v], dim=-1)
-        x = self.dropout(x)
-        return self.fc(x).squeeze(-1)  # raw logits
+        # ID embeddings
+        self.user_embedding = nn.Embedding(num_users, user_embed_dim)
+        self.nonprofit_embedding = nn.Embedding(num_nonprofits, nonprofit_embed_dim)
 
+        # Side features
+        self.user_side = nn.Linear(user_side_dim, user_embed_dim) if user_side_dim > 0 else None
+        self.nonprofit_side = nn.Linear(nonprofit_side_dim, nonprofit_embed_dim) if nonprofit_side_dim > 0 else None
 
-def train_two_tower(train_data, num_users, num_nonprofits, embedding_dim=128, epochs=5, lr=1e-3):
-    """
-    train_data: list of tuples (user_id, nonprofit_id, label, weight)
-        - user_id: int
-        - nonprofit_id: int
-        - label: binary 0/1
-        - weight: float (from engagement_types.weight)
-    """
+    def forward(self, user_ids, nonprofit_ids, user_feats=None, nonprofit_feats=None):
+        # ID embeddings
+        u_emb = self.user_embedding(user_ids)
+        n_emb = self.nonprofit_embedding(nonprofit_ids)
 
-    model = TwoTowerModel(num_users, num_nonprofits, embedding_dim)
+        # Side features
+        if self.user_side is not None and user_feats is not None:
+            u_emb = u_emb + self.user_side(user_feats)
+
+        if self.nonprofit_side is not None and nonprofit_feats is not None:
+            n_emb = n_emb + self.nonprofit_side(nonprofit_feats)
+
+        # Normalize
+        u_emb = F.normalize(u_emb, dim=-1)
+        n_emb = F.normalize(n_emb, dim=-1)
+
+        # Similarity
+        scores = (u_emb * n_emb).sum(dim=-1)
+        return scores
+
+# -----------------------------
+# Training loop
+# -----------------------------
+def train_two_tower(train_loader, num_users, num_nonprofits,
+                    embedding_dim=128, epochs=5, lr=1e-3,
+                    user_side_dim=0, nonprofit_side_dim=0):
+
+    model = TwoTowerModel(
+        num_users=num_users,
+        num_nonprofits=num_nonprofits,
+        user_embed_dim=embedding_dim,
+        nonprofit_embed_dim=embedding_dim,
+        user_side_dim=user_side_dim,
+        nonprofit_side_dim=nonprofit_side_dim,
+    )
+
     optimizer = optim.Adam(model.parameters(), lr=lr)
-
-    # BCEWithLogitsLoss with per-sample weights
-    loss_fn = nn.BCEWithLogitsLoss(reduction='none')
+    loss_fn = nn.BCEWithLogitsLoss(reduction="none")
 
     for epoch in range(epochs):
         total_loss = 0.0
+        for batch in train_loader:
+            user_ids, nonprofit_ids, user_feats, nonprofit_feats, labels, weights = batch
 
-        # unpack training data for this epoch
-        user_ids = torch.tensor([u for u, _, _, _ in train_data], dtype=torch.long)
-        nonprofit_ids = torch.tensor([n for _, n, _, _ in train_data], dtype=torch.long)
-        labels = torch.tensor([l for _, _, l, _ in train_data], dtype=torch.float32)
-        weights = torch.tensor([w for _, _, _, w in train_data], dtype=torch.float32)
+            logits = model(user_ids, nonprofit_ids, user_feats, nonprofit_feats)
+            losses = loss_fn(logits, labels)
+            weighted_loss = (losses * weights).mean()
 
-        logits = model(user_ids, nonprofit_ids)
-        losses = loss_fn(logits, labels)
-        weighted_loss = (losses * weights).mean()
+            optimizer.zero_grad()
+            weighted_loss.backward()
+            optimizer.step()
 
-        optimizer.zero_grad()
-        weighted_loss.backward()
-        optimizer.step()
+            total_loss += weighted_loss.item()
 
-        total_loss = weighted_loss.item()
-        print(f"Epoch {epoch+1}/{epochs} - Loss: {total_loss:.4f}")
+        avg_loss = total_loss / len(train_loader)
+        print(f"Epoch {epoch+1}/{epochs} - Loss: {avg_loss:.4f}")
 
     return model
 
-def label_from_engagement(engagement_type_id):
-    # adjust mapping based on your engagement_types table
-    if engagement_type_id in [1]:  # view
-        return 0
-    else:  # click, donate, volunteer etc.
-        return 1
+# -----------------------------
+# Preprocessing
+# -----------------------------
+def normalize_column(values):
+    arr = np.array(values, dtype=np.float32)
+    arr = np.nan_to_num(arr, nan=0.0)
+    if arr.std() > 0:
+        arr = (arr - arr.mean()) / arr.std()
+    return arr
 
-# Fetch interactions
-# resp = supabase.table("user_activity").select("user_id, nonprofit_id, engagement_type_id").execute()
-# rows = resp.data
+def fetch_user_features():
+    resp = supabase.table("users").select("id,income,donation_budget").execute()
+    rows = resp.data
+    incomes = normalize_column([r["income"] or 0 for r in rows])
+    budgets = normalize_column([r["donation_budget"] or 0 for r in rows])
 
-# user_ids = [row["user_id"] for row in rows]
-# nonprofit_ids = [row["nonprofit_id"] for row in rows]
-# labels = [label_from_engagement(row["engagement_type_id"]) for row in rows]
+    features = {}
+    for r, inc, bud in zip(rows, incomes, budgets):
+        features[int(r["id"])] = np.array([inc, bud], dtype=np.float32)
+    return features
 
+def fetch_nonprofit_features():
+    resp = supabase.table("nonprofits").select("id,employee_count,total_revenue,latitude,longitude").execute()
+    rows = resp.data
+    emp = normalize_column([r["employee_count"] or 0 for r in rows])
+    rev = normalize_column([r["total_revenue"] or 0 for r in rows])
+    lat = normalize_column([r["latitude"] or 0 for r in rows])
+    lon = normalize_column([r["longitude"] or 0 for r in rows])
+
+    features = {}
+    for r, e, re, la, lo in zip(rows, emp, rev, lat, lon):
+        features[int(r["id"])] = np.array([e, re, la, lo], dtype=np.float32)
+    return features
+
+# -----------------------------
+# Main
+# -----------------------------
+
+# Count users/nonprofits
 num_users = supabase.table("users").select("id", count="exact").execute().count
 num_nonprofits = supabase.table("nonprofits").select("id", count="exact").execute().count
 
-resp = supabase.table("interaction_training").select("*").execute()
-train_data = [
-    (
-        int(row["user_id"]),
-        int(row["nonprofit_id"]),
-        int(row["label"]),
-        float(row["weight"]),
-    )
-    for row in resp.data
-]
+# Fetch features
+user_features = fetch_user_features()
+nonprofit_features = fetch_nonprofit_features()
 
+# Fetch training rows
+resp = supabase.table("interaction_training").select("*").execute()
+rows = resp.data
+
+dataset = InteractionDataset(rows, user_features, nonprofit_features)
+loader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
+
+# Train model
 model = train_two_tower(
-    train_data=train_data,
-    num_users=num_users + 1,       # +1 since embeddings are 0-indexed
+    loader,
+    num_users=num_users + 1,
     num_nonprofits=num_nonprofits + 1,
     embedding_dim=128,
-    epochs=10
+    epochs=10,
+    user_side_dim=2,      # income + budget
+    nonprofit_side_dim=4  # emp, revenue, lat, lon
 )
 
-torch.save(model.state_dict(), "models/two_tower.pth")
-print("Model trained and saved as two_tower.pth")
+torch.save(model.state_dict(), "models/two_tower_with_side.pth")
+print("✅ Model trained and saved as models/two_tower_with_side.pth")
