@@ -68,7 +68,7 @@ def store_user_vector(user_id: str, vector: list[float]) -> dict:
     return response.data
 
 
-def get_user_vector(user_id: str) -> list[float] | None:
+def get_user_vector(user_id: int) -> list[float] | None:
     """Fetch a user's embedding vector by ID."""
     response = (
         supabase.table("user_interest_vectors")
@@ -79,7 +79,7 @@ def get_user_vector(user_id: str) -> list[float] | None:
     if response.data:
         vector = response.data[0]["vector"]
         if isinstance(vector, str):
-            vector = json.loads(vector)  # convert string → list
+            vector = json.loads(vector)
         return vector
     return None
 
@@ -108,7 +108,7 @@ def get_nonprofit_vector(nonprofit_id: str) -> list[float] | None:
     if response.data:
         vector = response.data[0]["vector"]
         if isinstance(vector, str):
-            vector = json.loads(vector)  # convert string → list
+            vector = json.loads(vector)
         return vector
     return None
 
