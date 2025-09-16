@@ -6,32 +6,110 @@ from services.db import supabase
 from services.embedding_service import embed_texts
 import numpy as np
 
+# Utilities
+def encode_value(v, vocab):
+    if v is None:
+        return vocab["<PAD>"]
+    return vocab.get(v, vocab["<UNK>"])
+
+def encode_list(vs, vocab, max_len=5):
+    """Encode multi-value fields as list of IDs, pad/truncate to fixed length."""
+    if not vs:
+        vs = []
+    ids = [vocab.get(v, vocab["<UNK>"]) for v in vs]
+    if len(ids) < max_len:
+        ids += [vocab["<PAD>"]] * (max_len - len(ids))
+    return ids[:max_len]
+
+def fetch_user_features(user_rows, city_vocab, state_vocab,
+                        interests_vocab, prefs_vocab,
+                        max_len=5):
+    """
+    Convert raw Supabase user rows → model-ready tensors.
+    Returns a dict of tensors keyed by feature name.
+    """
+    user_ids = []
+    incomes = []
+    budgets = []
+    city_ids = []
+    state_ids = []
+    interests_ids = []
+    prefs_ids = []
+
+    for r in user_rows:
+        user_ids.append(r["id"])
+        incomes.append(float(r["income"] or 0.0))
+        budgets.append(float(r["donation_budget"] or 0.0))
+        city_ids.append(encode_value(r["city"], city_vocab))
+        state_ids.append(encode_value(r["state"], state_vocab))
+        interests_ids.append(encode_list(r.get("interests", []), interests_vocab, max_len))
+        prefs_ids.append(encode_list(r.get("engagement_prefs", []), prefs_vocab, max_len))
+
+    return {
+        "user_ids": torch.tensor(user_ids, dtype=torch.long),
+        "income": torch.tensor(incomes, dtype=torch.float32),
+        "budget": torch.tensor(budgets, dtype=torch.float32),
+        "city_ids": torch.tensor(city_ids, dtype=torch.long),
+        "state_ids": torch.tensor(state_ids, dtype=torch.long),
+        "interests_ids": torch.tensor(interests_ids, dtype=torch.long),  # [N, max_len]
+        "prefs_ids": torch.tensor(prefs_ids, dtype=torch.long),          # [N, max_len]
+    }
+
+
+def fetch_nonprofit_features(nonprofit_rows, mission_vocab, max_len=5):
+    """
+    Convert raw Supabase nonprofit rows → model-ready tensors.
+    Returns a dict of tensors keyed by feature name.
+    """
+    nonprofit_ids = []
+    revenues = []
+    budgets = []  # we’ll use expenses as a proxy for “budget”
+    mission_ids = []
+
+    for r in nonprofit_rows:
+        nonprofit_ids.append(r["id"])
+        revenues.append(float(r["total_revenue"] or 0.0))
+        budgets.append(float(r["total_expenses"] or 0.0))
+        mission_ids.append(encode_value(r["mission"], mission_vocab))
+
+    return {
+        "nonprofit_ids": torch.tensor(nonprofit_ids, dtype=torch.long),
+        "revenue": torch.tensor(revenues, dtype=torch.float32),
+        "budget": torch.tensor(budgets, dtype=torch.float32),
+        "mission_ids": torch.tensor(mission_ids, dtype=torch.long),
+    }
+
+
 # -----------------------------
 # Dataset wrapper
 # -----------------------------
 class InteractionDataset(torch.utils.data.Dataset):
     def __init__(self, rows, user_features, nonprofit_features):
-        """
-        rows: list of dicts from interaction_training table
-        user_features: dict[user_id] -> np.array
-        nonprofit_features: dict[nonprofit_id] -> np.array
-        """
+        super().__init__()
         self.rows = rows
         self.user_features = user_features
         self.nonprofit_features = nonprofit_features
+
+        # Extract unique user and nonprofit IDs
+        self.user_ids = list(set(row["user_id"] for row in rows))
+        self.nonprofit_ids = list(set(row["nonprofit_id"] for row in rows))
+
+        # Create a mapping from user ID to index
+        self.user_id_to_index = {user_id: idx for idx, user_id in enumerate(self.user_ids)}
+        self.nonprofit_id_to_index = {nonprofit_id: idx for idx, nonprofit_id in enumerate(self.nonprofit_ids)}
 
     def __len__(self):
         return len(self.rows)
 
     def __getitem__(self, idx):
         row = self.rows[idx]
-        u_id = int(row["user_id"])
-        n_id = int(row["nonprofit_id"])
+        u_id = self.user_id_to_index[int(row["user_id"])]
+        n_id = self.nonprofit_id_to_index[int(row["nonprofit_id"])]
         label = float(row["label"])
         weight = float(row["weight"])
 
-        u_feats = self.user_features.get(u_id, np.zeros(2, dtype=np.float32))
-        n_feats = self.nonprofit_features.get(n_id, np.zeros(4, dtype=np.float32))
+        u_feats = self.user_features.get(int(row["user_id"]), np.zeros(6, dtype=np.float32))  # Adjusted for new features
+        n_feats = self.nonprofit_features.get(int(row["nonprofit_id"]), np.zeros(5, dtype=np.float32))
 
         return (
             torch.tensor(u_id, dtype=torch.long),
@@ -127,7 +205,9 @@ def train_two_tower(train_loader, num_users, num_nonprofits,
 # -----------------------------
 def normalize_column(values):
     """Convert list of values to normalized numpy array"""
+    print(f"Normalizing column with sample values: {values[:5]}")
     if type(values[0]) in [str, bytes]:
+        print(f"Embedding text values: {values[0]}")
         # TODO: fix this, gives error
         values = embed_texts([str(v) for v in values])
     arr = np.array(values, dtype=np.float32)
