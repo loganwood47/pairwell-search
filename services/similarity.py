@@ -93,47 +93,61 @@ def load_model_and_preprocessing(model_path, preprocessing_path, model_class, **
     return model, preprocessing
 
 
-def get_user_embedding(model, preprocessing, raw_user):
+
+def preprocess_single_user(raw_user, preprocessing):
+    """
+    Convert raw user dict into a batch dict ready for model.forward_user().
+    """
     vocabs = preprocessing["vocabs"]
+    inc_mean, inc_std = preprocessing["inc_mean"], preprocessing["inc_std"]
+    don_mean, don_std = preprocessing["don_mean"], preprocessing["don_std"]
 
-    # numeric features (normalize with training stats)
-    inc = (raw_user.get("income", 0.0) - preprocessing["inc_mean"]) / preprocessing["inc_std"]
-    don = (raw_user.get("donation_budget", 0.0) - preprocessing["don_mean"]) / preprocessing["don_std"]
-    feats = torch.tensor([[inc, don]], dtype=torch.float32)
+    # numeric
+    inc_val = (raw_user.get("income", 0.0) - inc_mean) / inc_std
+    don_val = (raw_user.get("donation_budget", 0.0) - don_mean) / don_std
+    user_num = torch.tensor([[inc_val, don_val]], dtype=torch.float)
 
-    # categorical lookups (default to 0 if unseen)
-    city_id = vocabs["city"].get(raw_user.get("city"), 0)
-    state_id = vocabs["state"].get(raw_user.get("state"), 0)
-    interest_id = vocabs["interest"].get(raw_user.get("interests", [None])[0], 0)
-    pref_id = vocabs["pref"].get(raw_user.get("engagement_prefs", [None])[0], 0)
+    # categorical (lookup in vocabs with fallback to 0)
+    def lookup(vocab, key):
+        return vocab.get(raw_user.get(key, "").lower(), 0)
 
-    city_id = torch.tensor([city_id])
-    state_id = torch.tensor([state_id])
-    interest_id = torch.tensor([interest_id])
-    pref_id = torch.tensor([pref_id])
+    city_id = lookup(vocabs["city"], "city")
+    state_id = lookup(vocabs["state"], "state")
 
+    def lookup_list(vocab, items):
+        return [vocab.get(x.lower(), 0) for x in items]
+
+    interest_ids = lookup_list(vocabs["interest"], raw_user.get("interests", []))
+    pref_ids = lookup_list(vocabs["interest"], raw_user.get("engagement_prefs", []))
+
+    # pad to fixed length (match training pad length, e.g. 5)
+    pad_len = 5
+    def pad_list(lst):
+        return lst[:pad_len] + [0] * max(0, pad_len - len(lst))
+
+    interest_ids = torch.tensor([pad_list(interest_ids)], dtype=torch.long)
+    pref_ids = torch.tensor([pad_list(pref_ids)], dtype=torch.long)
+
+    batch = {
+        "user_idx": torch.tensor([0], dtype=torch.long),  # dummy id
+        "user_num": user_num,
+        "user_city": torch.tensor([city_id], dtype=torch.long),
+        "user_state": torch.tensor([state_id], dtype=torch.long),
+        "user_interests": interest_ids,
+        "user_prefs": pref_ids,
+    }
+    return batch
+
+
+def get_user_embedding(model, preprocessing, raw_user):
+    """
+    Take raw user dict, convert to batch, and run through model.forward_user.
+    """
+    model.eval()
+    batch = preprocess_single_user(raw_user, preprocessing)
     with torch.no_grad():
-        # start with numeric features
-        u_vec = model.user_side(feats)
-
-        # add categorical embeddings if they exist
-        if hasattr(model, "city_emb"):
-            u_vec = u_vec + model.city_emb(city_id)
-        if hasattr(model, "state_emb"):
-            u_vec = u_vec + model.state_emb(state_id)
-        if hasattr(model, "interest_emb"):
-            u_vec = u_vec + model.interest_emb(interest_id)
-        if hasattr(model, "pref_emb"):
-            u_vec = u_vec + model.pref_emb(pref_id)
-
-        # pass through user MLP
-        if hasattr(model, "user_mlp"):
-            u_vec = model.user_mlp(u_vec)
-
-        # normalize
-        u_vec = torch.nn.functional.normalize(u_vec, dim=-1)
-
-    return u_vec.squeeze(0).numpy()
+        emb = model.forward_user(batch)
+    return emb.squeeze(0).numpy()
 
 
        

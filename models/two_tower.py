@@ -355,6 +355,33 @@ class TwoTower(nn.Module):
         # similarity scores
         scores = (u_final * n_final).sum(dim=-1)
         return scores
+    
+    def forward_user(self, batch):
+        """
+        Compute user tower embeddings only (no similarity scores).
+        Expects the same batch dict format from collate_fn, but ignores nonprofit fields.
+        Returns normalized user embeddings (B, embed_dim).
+        """
+        u_id = batch["user_idx"]
+
+        # ID embeddings
+        u_id_e = self.user_id_emb(u_id)            # (B, D)
+
+        # numeric
+        u_num_e = self.user_num_proj(batch["user_num"])  # (B, D)
+
+        # categorical
+        u_city_e = self.city_emb(batch["user_city"])
+        u_state_e = self.state_emb(batch["user_state"])
+        u_interest_e = self.interest_emb(batch["user_interests"]).mean(dim=1)
+        u_prefs_e = self.interest_emb(batch["user_prefs"]).mean(dim=1)
+
+        # compose
+        u_concat = torch.cat([u_id_e, u_num_e, u_city_e, u_state_e, u_interest_e], dim=1)
+
+        # final embedding
+        u_final = F.normalize(self.user_mlp(u_concat), dim=-1)
+        return u_final
 
     def encode_users(self, user_index_map, user_features, batch_size=1024, device="cpu"):
         """Return dict user_id -> embedding (numpy list)"""
