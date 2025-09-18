@@ -1,5 +1,5 @@
 import streamlit as st
-from services import db, embedding_service, similarity, recommend, visualize, interest_expansion
+from services import db, embedding_service, similarity, recommend, visualize, interest_expansion, geocode_city
 import pandas as pd
 
 from models.two_tower import TwoTower
@@ -18,6 +18,12 @@ income = st.number_input("Income", min_value=0)
 interests = st.text_area("Interests (comma-separated)").split(",")
 engagement_prefs = st.text_area("Engagement Preferences (comma-separated)").split(",")
 
+user_lat, user_lon = geocode_city.geocode_city(city, state)
+
+expanded_interests = interest_expansion.expand_interest([i.strip() for i in interests if i.strip()])
+
+embedded_interests = embedding_service.embed_texts(expanded_interests)
+
 # TODO: Implement twoTowerRec and use here, need to geocode and do interest expansion first to get mission vector
 
 if st.button("Get User Embedding"):
@@ -29,7 +35,17 @@ if st.button("Get User Embedding"):
         "engagement_prefs": [e.strip() for e in engagement_prefs if e.strip()]
     }
     user_emb = similarity.get_user_embedding(model, preprocessing, raw_user)
-    st.write("User Embedding:", user_emb)
+
+    # recs = recommend.twoTowerRec(user_emb, embedded_interests.mean(axis=0), user_lat, user_lon, alpha=0.7, beta=0.3, gamma=0.0)
+    recs = recommend.twoTowerRec(
+        user_emb, 
+        embedded_interests, 
+        user_lat, 
+        user_lon, 
+        alpha=0.7, 
+        beta=0.3, 
+        gamma=0.0)
+    st.write(recs)
 
 # debug = st.toggle("Debug Mode", False)
 # if debug:
