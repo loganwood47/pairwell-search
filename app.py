@@ -24,9 +24,7 @@ expanded_interests = interest_expansion.expand_interest([i.strip() for i in inte
 
 embedded_interests = embedding_service.embed_texts(expanded_interests)
 
-# TODO: Implement twoTowerRec and use here, need to geocode and do interest expansion first to get mission vector
-
-if st.button("Get User Embedding"):
+if st.button("Get Recommendations"):
     raw_user = {
         "city": city,
         "state": state,
@@ -42,10 +40,49 @@ if st.button("Get User Embedding"):
         embedded_interests, 
         user_lat, 
         user_lon, 
-        alpha=0.7, 
-        beta=0.3, 
-        gamma=0.0)
-    st.write(recs)
+        alpha=0.7, # trained model prediction weight
+        beta=0.3,  # mission weight
+        gamma=0.8) # geo weight
+    # st.write(recs)
+
+    np_ids = [r["id"] for r in recs]
+    nonprofits = db.get_nonprofits_by_id(ids=np_ids)
+
+    st.title("Top Recommended Nonprofits:")
+
+    data = []
+    for r in np_ids:
+        np_info = [nonprofits[i] for i in range(len(nonprofits)) if nonprofits[i]['id'] == r][0]
+        result_info = [rec for rec in recs if rec['id'] == r][0]
+        data.append({
+        "Nonprofit Name": np_info['name'],
+        "Mission": np_info['mission'],
+        "City": np_info.get('city'),
+        "State": np_info.get('state'),
+        "Logo": np_info.get("logo_url"),
+        "Website": np_info.get('website'),
+        "Score": result_info['total_similarity'],
+        "Model Score": result_info['model_similarity'],
+        "Mission Score": result_info['mission_similarity'],
+        "Geo Score": result_info['geo_distance_meters']
+        })
+
+    df = pd.DataFrame(data)
+
+    st.dataframe(df,
+                    column_config={
+                        "Nonprofit Name": st.column_config.TextColumn("Nonprofit Name"),
+                        "Mission": st.column_config.TextColumn("Mission"),
+                        "City": st.column_config.TextColumn("City"),
+                        "State": st.column_config.TextColumn("State"),
+                        "Logo": st.column_config.ImageColumn("Logo", width=100),
+                        "Website": st.column_config.LinkColumn("Website"),
+                        "Total Similarity Score": st.column_config.NumberColumn("Total Similarity Score", format="%.4f"),
+                        "Model Similarity Score": st.column_config.NumberColumn("Model Prediction Score", format="%.4f"),
+                        "Mission Similarity Score": st.column_config.NumberColumn("Mission Score", format="%.4f"),
+                        "Geo Distance (meters)": st.column_config.NumberColumn("Geo Distance (meteres)", format="%d"),
+                    },
+                    hide_index=False)
 
 # debug = st.toggle("Debug Mode", False)
 # if debug:
@@ -108,30 +145,30 @@ if st.button("Get User Embedding"):
 #         # Recommend
 #         results = recommend.get_recommendations(user_vec, vs)
 
-#         st.title("Top Recommended Nonprofits:")
+        # st.title("Top Recommended Nonprofits:")
 
-#         data = []
-#         for r in results:
-#             np_info = nonprofits_by_id[r["id"]]
-#             data.append({
-#             "Nonprofit Name": np_info['name'],
-#             "Mission": np_info['mission'],
-#             "Logo": np_info.get("logo_url"),
-#             "Website": np_info.get('website'),
-#             "Score": r['score']
-#             })
+        # data = []
+        # for r in results:
+        #     np_info = nonprofits_by_id[r["id"]]
+        #     data.append({
+        #     "Nonprofit Name": np_info['name'],
+        #     "Mission": np_info['mission'],
+        #     "Logo": np_info.get("logo_url"),
+        #     "Website": np_info.get('website'),
+        #     "Score": r['score']
+        #     })
 
-#         df = pd.DataFrame(data)
+        # df = pd.DataFrame(data)
 
-#         st.dataframe(df,
-#                      column_config={
-#                          "Nonprofit Name": st.column_config.TextColumn("Nonprofit Name"),
-#                          "Mission": st.column_config.TextColumn("Mission"),
-#                          "Logo": st.column_config.ImageColumn("Logo", width=100),
-#                          "Website": st.column_config.LinkColumn("Website"),
-#                          "Score": st.column_config.NumberColumn("Score", format="%.4f")
-#                      },
-#                      hide_index=False)
+        # st.dataframe(df,
+        #              column_config={
+        #                  "Nonprofit Name": st.column_config.TextColumn("Nonprofit Name"),
+        #                  "Mission": st.column_config.TextColumn("Mission"),
+        #                  "Logo": st.column_config.ImageColumn("Logo", width=100),
+        #                  "Website": st.column_config.LinkColumn("Website"),
+        #                  "Score": st.column_config.NumberColumn("Score", format="%.4f")
+        #              },
+        #              hide_index=False)
                 
 
 #         # Optional: visualize embeddings

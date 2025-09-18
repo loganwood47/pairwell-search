@@ -22,9 +22,9 @@ def get_nonprofits(limit: int = 1000):
     resp = supabase.table("nonprofits").select("*").limit(limit).execute()
     return resp.data
 
-def get_nonprofits_by_id(limit: int = 1000, ids: list[int] = []):
+def get_nonprofits_by_id(limit: int = 1000, ids: list[int] = [1]):
     """Fetch nonprofits from DB"""
-    resp = supabase.table("nonprofits").select("*").eq("id", ids).limit(limit).execute()
+    resp = supabase.table("nonprofits").select("*").in_("id", ids).limit(limit).execute()
     return resp.data
 
 def get_nonprofit_by_ein(limit: int = 1000, ein: str = ""):

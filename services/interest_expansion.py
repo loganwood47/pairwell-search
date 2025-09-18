@@ -27,6 +27,11 @@ def expand_interest(interest: str) -> str:
     # print("Raw response:", response.text)
 
     # print("Final output:", response.json())
-    response.raise_for_status()
-    resp_json = response.json()
-    return resp_json["choices"][0]["message"]["content"].strip()
+    try:
+        response.raise_for_status()
+        resp_json = response.json()
+        return resp_json["choices"][0]["message"]["content"].strip()
+    except requests.HTTPError as e:
+        print("Falling back to raw interests. Error response:", response.text)
+        return(','.join(interest))  # Fallback to original interest on error
+    
