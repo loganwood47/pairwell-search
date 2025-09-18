@@ -9,8 +9,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
-from services.db import supabase
-from services.embedding_service import embed_texts   # must exist and return np.ndarray
+from src.pairwell_search.services.db import supabase
+from src.pairwell_search.services.embedding_service import embed_texts   # must exist and return np.ndarray
 import time
 import pickle
 

@@ -4,7 +4,7 @@ Check FAISS similarity search
 """
 import numpy as np 
 import pytest
-from services.similarity import preprocess_single_user, get_user_embedding
+from src.pairwell_search.services.similarity import preprocess_single_user, get_user_embedding
 
 
 def test_preprocess_single_user(dummy_user, dummy_preprocessing):

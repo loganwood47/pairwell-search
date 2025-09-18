@@ -6,9 +6,9 @@ Shared pytest fixtures for tests
 import pytest
 import numpy as np
 import torch
-from services import embedding_service, similarity
-from services.similarity import VectorSearch
-from services.embedding_service import embed_texts
+from src.pairwell_search.services import embedding_service, similarity
+from src.pairwell_search.services.similarity import VectorSearch
+from src.pairwell_search.services.embedding_service import embed_texts
 
 import sys
 import os

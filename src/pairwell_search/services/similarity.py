@@ -9,7 +9,7 @@ import math
 import pickle
 
 from sentence_transformers import SentenceTransformer
-from models.two_tower import TwoTower
+from src.pairwell_search.models.two_tower import TwoTower
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -63,7 +63,7 @@ class VectorSearch:
 
         return results
 
-def load_model_and_preprocessing(model_path, preprocessing_path, model_class, **model_kwargs):
+def load_model_and_preprocessing(model_path, preprocessing_path, **model_kwargs):
     """
     Load a trained model and its matching preprocessing metadata.
     """

@@ -3,16 +3,16 @@ recommend.py
 Blends content-based similarity and collaborative filtering
 """
 import torch
-from models.two_tower import TwoTower
-from services.db import supabase
+from src.pairwell_search.models.two_tower import TwoTower
+from src.pairwell_search.services.db import supabase
 import numpy as np
 
-from services.similarity import VectorSearch, get_user_embedding
-from services.embedding_service import embed_texts
+from src.pairwell_search.services.similarity import VectorSearch, get_user_embedding
+from src.pairwell_search.services.embedding_service import embed_texts
 
-# from services.collaborative import get_collaborative_scores   # (optional, later)
+# from src.pairwell_search.services.collaborative import get_collaborative_scores   # (optional, later)
 
-def twoTowerRec(user_embedding, user_mission_embedding, user_lat, user_lon, alpha=0.5, beta=0.5, gamma=0.0) -> list:
+def twoTowerRec(user_embedding: list, user_mission_embedding: list, user_lat: float, user_lon: float , alpha: float = 0.5, beta: float = 0.5, gamma: float = 0.0) -> list:
     """Get recommendations for a user using TwoTower model and vector search"""
     normAlpha = alpha / (alpha + beta + gamma)
     normBeta = beta / (alpha + beta + gamma)

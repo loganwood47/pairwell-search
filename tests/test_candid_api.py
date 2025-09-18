@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock, mock_open, call
 import requests
-from services.apis.candid_api import (
+from src.pairwell_search.services.apis.candid_api import (
     CandidEssentialsAPI,
     update_api_call_count_in_file,
     get_api_call_count_from_file,

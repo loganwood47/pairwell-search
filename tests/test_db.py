@@ -5,7 +5,7 @@ Note: This only checks if functions are callable.
 For real DB, you should mock Supabase responses.
 """
 
-from services import db
+from src.pairwell_search.services import db
 from unittest.mock import patch
 
 def test_db_module_has_functions():

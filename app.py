@@ -1,13 +1,13 @@
 import streamlit as st
-from services import db, embedding_service, similarity, recommend, visualize, interest_expansion, geocode_city
+from src.pairwell_search.services import db, embedding_service, similarity, recommend, visualize, interest_expansion, geocode_city
 import pandas as pd
 
-from models.two_tower import TwoTower
-model_path = "models/two_tower_trained_1758161149.pt"
-preprocessing_path = "models/preprocessing_1758161083.pkl"
+from src.pairwell_search.models.two_tower import TwoTower
+model_path = "src/pairwell_search/models/two_tower_trained_1758161149.pt"
+preprocessing_path = "src/pairwell_search/models/preprocessing_1758161083.pkl"
 
 model, preprocessing = similarity.load_model_and_preprocessing(
-    model_path, preprocessing_path, TwoTower,
+    model_path, preprocessing_path,
     n_users=1, n_nonprofits=1,
     text_emb_dim=128, embed_dim=64, cat_emb_dim=16
 )
@@ -18,11 +18,11 @@ income = st.number_input("Income", min_value=0)
 interests = st.text_area("Interests (comma-separated)").split(",")
 engagement_prefs = st.text_area("Engagement Preferences (comma-separated)").split(",")
 
-user_lat, user_lon = geocode_city.geocode_city(city, state)
+user_lat, user_lon = geocode_city.geocode_city(city, state) if city and state else (None, None)
 
-expanded_interests = interest_expansion.expand_interest([i.strip() for i in interests if i.strip()])
+expanded_interests = interest_expansion.expand_interest([i.strip() for i in interests if i.strip()]) if interests else []
 
-embedded_interests = embedding_service.embed_texts(expanded_interests)
+embedded_interests = embedding_service.embed_texts(expanded_interests) if interests else None
 
 if st.button("Get Recommendations"):
     raw_user = {

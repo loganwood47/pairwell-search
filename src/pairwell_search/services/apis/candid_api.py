@@ -2,7 +2,7 @@ import requests
 import time
 from typing import List, Dict
 from .. import db
-from services.embedding_service import embed_texts
+from src.pairwell_search.services.embedding_service import embed_texts
 # TODO: add graphql client for Candid taxonomy api
 # TODO: normalize NP database, split nonprofit into multiple tables (geo, codes, financials etc)
 

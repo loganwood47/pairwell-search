@@ -3,7 +3,7 @@ test_recommend.py
 Check recommendation blending
 """
 import pytest
-from services import recommend
+from src.pairwell_search.services import recommend
 
 def test_twoTowerRec(dummy_user_vector, dummy_mission_vector):
     user_mission_embedding = dummy_mission_vector

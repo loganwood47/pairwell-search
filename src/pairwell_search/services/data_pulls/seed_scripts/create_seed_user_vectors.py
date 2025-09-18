@@ -1,6 +1,6 @@
 import numpy as np
 from ...db import store_user_vector, supabase
-from services.embedding_service import embed_texts
+from src.pairwell_search.services.embedding_service import embed_texts
 
 
 def get_users_with_empty_vectors(batch_size=1000, offset=0):
