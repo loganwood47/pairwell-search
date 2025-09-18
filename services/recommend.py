@@ -2,9 +2,37 @@
 recommend.py
 Blends content-based similarity and collaborative filtering
 """
+import torch
+from models.two_tower import TwoTower
+from services.db import supabase
+import numpy as np
 
-from services.similarity import VectorSearch
+from services.similarity import VectorSearch, get_user_embedding
+from services.embedding_service import embed_texts
+
 # from services.collaborative import get_collaborative_scores   # (optional, later)
+
+def twoTowerRec(user_embedding, user_mission_embedding, user_lat, user_lon, alpha=0.5, beta=0.5, gamma=0.0):
+    """Get recommendations for a user using TwoTower model and vector search"""
+
+    resp = supabase.rpc(
+        "match_nonprofits", 
+        {
+            "query_embedding": user_embedding.tolist(), 
+            "match_count": 10,
+            "query_mission_embedding": user_mission_embedding.tolist(),
+            "query_lat": user_lat,
+            "query_lon": user_lon,
+            "model_weight": alpha,
+            "mission_weight": beta,
+            "geo_weight": gamma
+            }
+    ).execute()
+
+    recs = resp.data
+
+    return recs
+
 
 def get_recommendations(user_vec, vector_search: VectorSearch, alpha=0.5, beta=0.5, gamma=0.0): #alpha=0.7, beta=0.3):
     """Blend content similarity with other vector distances to get total rec"""

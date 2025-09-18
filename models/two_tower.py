@@ -12,6 +12,7 @@ from torch.utils.data import Dataset, DataLoader
 from services.db import supabase
 from services.embedding_service import embed_texts   # must exist and return np.ndarray
 import time
+import pickle
 
 # -------------------------
 # Config (tweakable)
@@ -446,6 +447,20 @@ class TwoTower(nn.Module):
 def train_and_write_back():
     users, nonprofits, interactions = fetch_all_from_supabase()
 
+    inc_vals = [u["income"] for u in users if u.get("income") is not None]
+    if inc_vals:
+        inc_mean = float(np.mean(inc_vals))
+        inc_std = float(np.std(inc_vals)) or 1.0
+    else:
+        inc_mean, inc_std = 0.0, 1.0
+
+    don_vals = [u["donation_budget"] for u in users if u.get("donation_budget") is not None]
+    if don_vals:
+        don_mean = float(np.mean(don_vals))
+        don_std = float(np.std(don_vals)) or 1.0
+    else:
+        don_mean, don_std = 0.0, 1.0
+
     # Build vocabs and mission embeddings
     vocabs = build_vocabs(users, nonprofits)
     mission_embs = precompute_mission_embeddings(nonprofits)
@@ -476,6 +491,25 @@ def train_and_write_back():
         embed_dim=EMBED_DIM,
         cat_emb_dim=CAT_EMBED_DIM
     )
+
+    # Save preprocessing metadata for later inference
+    preprocessing = {
+        "vocabs": vocabs,
+        "inc_mean": inc_mean,
+        "inc_std": inc_std,
+        "don_mean": don_mean,
+        "don_std": don_std,
+        "text_embed_dim": TEXT_EMBED_DIM,
+        "cat_embed_dim": CAT_EMBED_DIM,
+        "embed_dim": EMBED_DIM,
+        "user_index": dataset.user_index,
+        "nonprofit_index": dataset.nonprofit_index
+    }
+    ts = int(time.time())
+    preprocessing_path = f"models/preprocessing_{ts}.pkl"
+    with open(preprocessing_path, "wb") as f:
+        pickle.dump(preprocessing, f)
+    print("Saved preprocessing metadata to", preprocessing_path)
 
     # train
     print("Starting training...")
@@ -534,7 +568,7 @@ def train_and_write_back():
 # -------------------------
 # Entrypoint
 # -------------------------
-# if __name__ == "__main__":
-train_and_write_back()
+if __name__ == "__main__":
+    train_and_write_back()
 # test = fetch_all_interactions()
 # print(test[:10])
