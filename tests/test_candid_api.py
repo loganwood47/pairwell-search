@@ -56,8 +56,8 @@ class TestCandidEssentialsAPI(unittest.TestCase):
         self.api_key = "fake_api_key"
         self.api = CandidEssentialsAPI(self.api_key)
 
-    @patch("services.apis.candid_api.requests.post")
-    @patch("services.apis.candid_api.update_api_call_count_in_file")
+    @patch("src.pairwell_search.services.apis.candid_api.requests.post")
+    @patch("src.pairwell_search.services.apis.candid_api.update_api_call_count_in_file")
     def test_fetch_nonprofit_success(self, mock_update, mock_post):
         mock_resp = MagicMock()
         mock_resp.json.return_value = {"data": {"ein": "123"}}
@@ -69,7 +69,7 @@ class TestCandidEssentialsAPI(unittest.TestCase):
         mock_post.assert_called_once()
         mock_update.assert_called_once_with(self.api.API_CALL_COUNTER_FILE)
 
-    @patch("services.apis.candid_api.requests.post")
+    @patch("src.pairwell_search.services.apis.candid_api.requests.post")
     def test_fetch_nonprofit_http_error(self, mock_post):
         mock_resp = MagicMock()
         mock_resp.raise_for_status.side_effect = requests.exceptions.HTTPError()
@@ -78,8 +78,8 @@ class TestCandidEssentialsAPI(unittest.TestCase):
         with self.assertRaises(requests.exceptions.HTTPError):
             self.api.fetch_nonprofit("bad")
 
-    @patch("services.apis.candid_api.requests.post")
-    @patch("services.apis.candid_api.update_api_call_count_in_file")
+    @patch("src.pairwell_search.services.apis.candid_api.requests.post")
+    @patch("src.pairwell_search.services.apis.candid_api.update_api_call_count_in_file")
     def test_search_nonprofits_with_filters(self, mock_update, mock_post):
         mock_resp = MagicMock()
         mock_resp.json.return_value = {"hits": [{"ein": "111"}, {"ein": "222"}]}
@@ -97,8 +97,8 @@ class TestCandidEssentialsAPI(unittest.TestCase):
         self.assertIn("filters", kwargs["json"])
         self.assertIn("geography", kwargs["json"]["filters"])
 
-    @patch("services.apis.candid_api.requests.post")
-    @patch("services.apis.candid_api.update_api_call_count_in_file")
+    @patch("src.pairwell_search.services.apis.candid_api.requests.post")
+    @patch("src.pairwell_search.services.apis.candid_api.update_api_call_count_in_file")
     def test_search_nonprofits_empty_hits(self, mock_update, mock_post):
         mock_resp = MagicMock()
         mock_resp.json.return_value = {"hits": []}
@@ -108,13 +108,13 @@ class TestCandidEssentialsAPI(unittest.TestCase):
         result = self.api.search_nonprofits("nothing")
         self.assertEqual(result, [])
 
-    @patch("services.apis.candid_api.db.get_nonprofit_by_ein")
+    @patch("src.pairwell_search.services.apis.candid_api.db.get_nonprofit_by_ein")
     def test_check_nonprofit_exists_in_db_true(self, mock_db):
         mock_db.return_value = [{"ein": "123"}]
         result = self.api.check_nonprofit_exists_in_db("123")
         self.assertTrue(result)
 
-    @patch("services.apis.candid_api.db.get_nonprofit_by_ein")
+    @patch("src.pairwell_search.services.apis.candid_api.db.get_nonprofit_by_ein")
     def test_check_nonprofit_exists_in_db_false(self, mock_db):
         mock_db.return_value = []
         result = self.api.check_nonprofit_exists_in_db("notthere")
@@ -152,8 +152,8 @@ class TestCandidEssentialsAPI(unittest.TestCase):
         self.assertEqual(transformed["city"], "LA")
         self.assertEqual(transformed["total_revenue"], 1000)
 
-    @patch("services.apis.candid_api.db.add_nonprofit")
-    @patch("services.apis.candid_api.CandidEssentialsAPI.check_nonprofit_exists_in_db")
+    @patch("src.pairwell_search.services.apis.candid_api.db.add_nonprofit")
+    @patch("src.pairwell_search.services.apis.candid_api.CandidEssentialsAPI.check_nonprofit_exists_in_db")
     def test_add_single_nonprofit_exists(self, mock_check, mock_add):
         record = {
             "geography": {"city": "LA", "state": "CA", "latitude": 34, "longitude": -118},
@@ -186,10 +186,10 @@ class TestCandidEssentialsAPI(unittest.TestCase):
         self.assertEqual(result[0]["status"], "exists")
         mock_add.assert_not_called()
 
-    @patch("services.apis.candid_api.db.add_nonprofit")
-    @patch("services.apis.candid_api.CandidEssentialsAPI.check_nonprofit_exists_in_db")
-    @patch("services.apis.candid_api.clean_record")
-    @patch("services.apis.candid_api.CandidEssentialsAPI._transform_record")
+    @patch("src.pairwell_search.services.apis.candid_api.db.add_nonprofit")
+    @patch("src.pairwell_search.services.apis.candid_api.CandidEssentialsAPI.check_nonprofit_exists_in_db")
+    @patch("src.pairwell_search.services.apis.candid_api.clean_record")
+    @patch("src.pairwell_search.services.apis.candid_api.CandidEssentialsAPI._transform_record")
     def test_add_single_nonprofit_exists(self, mock_transform, mock_clean, mock_check, mock_add):
         mock_transform.return_value = {"ein": "123", "name": "Test Org"}
         mock_clean.return_value = {"ein": "123", "name": "Test Org"}
@@ -199,10 +199,10 @@ class TestCandidEssentialsAPI(unittest.TestCase):
         self.assertEqual(result, [{"status": "exists", "message": "Nonprofit already exists in DB"}])
         mock_add.assert_not_called()
 
-    @patch("services.apis.candid_api.db.add_nonprofit")
-    @patch("services.apis.candid_api.CandidEssentialsAPI.check_nonprofit_exists_in_db")
-    @patch("services.apis.candid_api.clean_record")
-    @patch("services.apis.candid_api.CandidEssentialsAPI._transform_record")
+    @patch("src.pairwell_search.services.apis.candid_api.db.add_nonprofit")
+    @patch("src.pairwell_search.services.apis.candid_api.CandidEssentialsAPI.check_nonprofit_exists_in_db")
+    @patch("src.pairwell_search.services.apis.candid_api.clean_record")
+    @patch("src.pairwell_search.services.apis.candid_api.CandidEssentialsAPI._transform_record")
     def test_add_single_nonprofit_new_no_mission(self, mock_transform, mock_clean, mock_check, mock_add):
         mock_transform.return_value = {"ein": "123", "name": "Test Org"}
         mock_clean.return_value = {"ein": "123", "name": "Test Org"}  # no mission field
@@ -216,12 +216,12 @@ class TestCandidEssentialsAPI(unittest.TestCase):
         )
         mock_add.assert_called_once()
 
-    @patch("services.apis.candid_api.db.store_nonprofit_vector")
-    @patch("services.apis.candid_api.embed_texts")
-    @patch("services.apis.candid_api.db.add_nonprofit")
-    @patch("services.apis.candid_api.CandidEssentialsAPI.check_nonprofit_exists_in_db")
-    @patch("services.apis.candid_api.clean_record")
-    @patch("services.apis.candid_api.CandidEssentialsAPI._transform_record")
+    @patch("src.pairwell_search.services.apis.candid_api.db.store_nonprofit_vector")
+    @patch("src.pairwell_search.services.apis.candid_api.embed_texts")
+    @patch("src.pairwell_search.services.apis.candid_api.db.add_nonprofit")
+    @patch("src.pairwell_search.services.apis.candid_api.CandidEssentialsAPI.check_nonprofit_exists_in_db")
+    @patch("src.pairwell_search.services.apis.candid_api.clean_record")
+    @patch("src.pairwell_search.services.apis.candid_api.CandidEssentialsAPI._transform_record")
     def test_add_single_nonprofit_new_with_mission(
         self, mock_transform, mock_clean, mock_check, mock_add, mock_embed, mock_store
     ):
@@ -242,20 +242,20 @@ class TestCandidEssentialsAPI(unittest.TestCase):
         mock_embed.assert_called_once_with(["Do good"])
         mock_store.assert_called_once_with("abc123", [0.1, 0.2, 0.3])
 
-    @patch("services.apis.candid_api.get_api_call_count_from_file")
-    @patch("services.apis.candid_api.CandidEssentialsAPI.search_nonprofits")
-    @patch("services.apis.candid_api.CandidEssentialsAPI._add_single_nonprofit")
-    @patch("services.apis.candid_api.time.sleep", return_value=None)  # no waiting
+    @patch("src.pairwell_search.services.apis.candid_api.get_api_call_count_from_file")
+    @patch("src.pairwell_search.services.apis.candid_api.CandidEssentialsAPI.search_nonprofits")
+    @patch("src.pairwell_search.services.apis.candid_api.CandidEssentialsAPI._add_single_nonprofit")
+    @patch("src.pairwell_search.services.apis.candid_api.time.sleep", return_value=None)  # no waiting
     def test_seed_nonprofits_respects_cap(self, mock_sleep, mock_add, mock_search, mock_get_count):
         # Cap already reached
         mock_get_count.return_value = 100
         self.api._seed_nonprofits(["query1"], total_call_cap=100)
         mock_search.assert_not_called()
 
-    @patch("services.apis.candid_api.get_api_call_count_from_file")
-    @patch("services.apis.candid_api.CandidEssentialsAPI.search_nonprofits")
-    @patch("services.apis.candid_api.CandidEssentialsAPI._add_single_nonprofit")
-    @patch("services.apis.candid_api.time.sleep", return_value=None)
+    @patch("src.pairwell_search.services.apis.candid_api.get_api_call_count_from_file")
+    @patch("src.pairwell_search.services.apis.candid_api.CandidEssentialsAPI.search_nonprofits")
+    @patch("src.pairwell_search.services.apis.candid_api.CandidEssentialsAPI._add_single_nonprofit")
+    @patch("src.pairwell_search.services.apis.candid_api.time.sleep", return_value=None)
     def test_seed_nonprofits_adds_records(self, mock_sleep, mock_add, mock_search, mock_get_count):
         mock_get_count.return_value = 0
         mock_search.side_effect = [
