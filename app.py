@@ -18,6 +18,8 @@ income = st.number_input("Income", min_value=0)
 interests = st.text_area("Interests (comma-separated)").split(",")
 engagement_prefs = st.text_area("Engagement Preferences (comma-separated)").split(",")
 
+# TODO: Implement twoTowerRec and use here, need to geocode and do interest expansion first to get mission vector
+
 if st.button("Get User Embedding"):
     raw_user = {
         "city": city,
