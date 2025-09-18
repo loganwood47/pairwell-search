@@ -12,7 +12,7 @@ from services.embedding_service import embed_texts
 
 # from services.collaborative import get_collaborative_scores   # (optional, later)
 
-def twoTowerRec(user_embedding, user_mission_embedding, user_lat, user_lon, alpha=0.5, beta=0.5, gamma=0.0):
+def twoTowerRec(user_embedding, user_mission_embedding, user_lat, user_lon, alpha=0.5, beta=0.5, gamma=0.0) -> list:
     """Get recommendations for a user using TwoTower model and vector search"""
     normAlpha = alpha / (alpha + beta + gamma)
     normBeta = beta / (alpha + beta + gamma)
