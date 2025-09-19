@@ -9,10 +9,15 @@ dependencies = [
     "numpy",
     "faiss-cpu",
     "requests",
-    "streamlit"
+    "streamlit",
+    "pandas",
+    "scikit-learn",
+    "matplotlib"
 ]
 
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
-packages = [{include = "pairwell_search"}]
+
+[tool.setuptools.packages.find]
+where = ["src"]

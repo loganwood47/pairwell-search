@@ -4,7 +4,7 @@ Check embeddings creation
 """
 
 import numpy as np
-from services.embedding_service import embed_texts, embed_user_profile
+from src.pairwell_search.services.embedding_service import embed_texts, embed_user_profile
 
 def test_embed_texts():
     texts = ["Hello world", "Climate change nonprofit"]

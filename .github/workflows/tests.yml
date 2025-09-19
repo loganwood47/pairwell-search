@@ -26,4 +26,7 @@ jobs:
         pip install pytest
 
     - name: Run tests
-      run: pytest -v
+      run: python -m pytest -v
+env:
+  SUPABASE_URL: "http://dummy-url"
+  SUPABASE_KEY: "dummy-key"
