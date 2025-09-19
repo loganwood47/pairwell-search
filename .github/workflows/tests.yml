@@ -27,3 +27,6 @@ jobs:
 
     - name: Run tests
       run: python -m pytest -v
+env:
+  SUPABASE_URL: "http://dummy-url"
+  SUPABASE_KEY: "dummy-key"
