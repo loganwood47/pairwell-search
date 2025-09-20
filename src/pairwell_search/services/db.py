@@ -126,3 +126,18 @@ def get_engagement_types():
     """Fetch engagement types + weights"""
     rows = supabase.table("engagement_types").select("*").execute()
     return {row["engagement_type"]: row for row in rows}
+
+def get_np_network_edges_by_id(nonprofit_id: list[int] = [1], top_k: int = 15) -> list[dict]:
+    """Fetch network edges for a given nonprofit ID"""
+    resp = supabase.table("network_graph_edges").select("*").in_("nonprofit_id_a", nonprofit_id).lte("metadata->prox_rank", top_k).execute()
+    return resp.data
+
+def fetch_node_attributes(node_ids: list[int]) -> dict[int, dict]:
+    """Fetch NP attributes for given nonprofit IDs for network graph"""
+    resp = (
+        supabase.table("nonprofits")
+        .select("id,name,mission,total_revenue,ntee_codes,logo_url")
+        .in_("id", node_ids)
+        .execute()
+    )
+    return {r["id"]: r for r in resp.data}
