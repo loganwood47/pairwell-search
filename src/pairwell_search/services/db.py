@@ -136,7 +136,7 @@ def fetch_node_attributes(node_ids: list[int]) -> dict[int, dict]:
     """Fetch NP attributes for given nonprofit IDs for network graph"""
     resp = (
         supabase.table("nonprofits")
-        .select("id,name,mission,total_revenue,ntee_codes,logo_url")
+        .select("id,name,mission,total_revenue,ntee_codes,logo_url,embedding")
         .in_("id", node_ids)
         .execute()
     )

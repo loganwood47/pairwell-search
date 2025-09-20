@@ -7,6 +7,8 @@ import networkx as nx
 from pyvis.network import Network
 import streamlit as st
 from textwrap import wrap
+from sklearn.metrics.pairwise import cosine_similarity
+import ast
 
 from src.pairwell_search.services.db import get_np_network_edges_by_id, fetch_node_attributes
 
@@ -84,15 +86,23 @@ def show_color_legend():
                 unsafe_allow_html=True,
             )
 
-def compute_node_size(row):
-    # TODO: better scaling function, map to similarity between user vecotr and nonprofit vector?
-    raw_rev = row.get("total_revenue")
-    try:
-        rev = float(raw_rev) if raw_rev is not None else 0.0
-    except (TypeError, ValueError):
-        rev = 0.0
-    # sqrt scaling, clamp to [10,40]
-    return max(10.0, min(40.0, (rev / 1e6) ** 0.5 * 10))
+def compute_node_size(row, user_embedding=None, default_size=10):
+    np_embedding = row.get("embedding")
+    if user_embedding is not None and np_embedding is not None:
+        try:
+            if isinstance(np_embedding, str):
+                import json
+                np_embedding = [float(x) for x in ast.literal_eval(np_embedding)]
+            sim = cosine_similarity(
+                [user_embedding], 
+                [np_embedding]
+            )[0][0]
+            # scale similarity [-1,1] to [10,40]
+            print(sim)
+            return 10 + (sim * 30) #TODO: get better scaling
+        except Exception as e:
+            print(f"Error computing similarity for node size: {e}")
+    return default_size
 
 def compute_node_color(row):
     codes = row.get("ntee_codes")
@@ -111,7 +121,7 @@ def fetch_edges_for_graph(seed_ids: list[int], top_k: int = 10) -> tuple[list[in
         all_nodes.update([e["nonprofit_id_b"] for e in edges])
     return list(all_nodes), all_edges
 
-def build_graph(user_id: str, seed_ids: list[int], nodes_data: dict, edges: list[dict]):
+def build_graph(user_id: str, user_embedding: list[float], seed_ids: list[int], nodes_data: dict, edges: list[dict]):
     G = nx.Graph()
     
     # Add User node (distinct style)
@@ -133,7 +143,7 @@ def build_graph(user_id: str, seed_ids: list[int], nodes_data: dict, edges: list
             nid,
             label=row["name"][:40],   # shorter label
             title=f"{mission}<br>Revenue: {rev_str}",
-            size=compute_node_size(row),
+            size=compute_node_size(row, user_embedding),
             color=row_color,
             group="nonprofit"
         )

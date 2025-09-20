@@ -100,5 +100,5 @@ if st.button("Get Recommendations"):
         
         nodes, edges = visualize.fetch_edges_for_graph(np_ids, 10)
         nodes_data = visualize.fetch_node_attributes(nodes)
-        graph = visualize.build_graph("You", np_ids, nodes_data, edges)
+        graph = visualize.build_graph("You", user_emb, np_ids, nodes_data, edges)
         visualize.show_graph(graph)
