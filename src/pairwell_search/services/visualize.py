@@ -70,6 +70,20 @@ ntee_code_lookup = {
     "Z": "Unknown/Other"
 }
 
+def calc_sims(user_embedding, np_embedding):
+    if user_embedding is not None and np_embedding is not None:
+        try:
+            if isinstance(np_embedding, str):
+                import json
+                np_embedding = [float(x) for x in ast.literal_eval(np_embedding)]
+            sim = cosine_similarity(
+                [user_embedding], 
+                [np_embedding]
+            )[0][0]
+            return sim
+        except Exception as e:
+            print(f"Error computing similarity: {e}")
+
 def show_color_legend():
     st.markdown("### NTEE Category Colors")
     cols = st.columns(2)
@@ -86,23 +100,19 @@ def show_color_legend():
                 unsafe_allow_html=True,
             )
 
-def compute_node_size(row, user_embedding=None, default_size=10):
+def compute_node_size(row, user_embedding=None, default_size=10, min_sim=0, max_sim=1):
     np_embedding = row.get("embedding")
-    if user_embedding is not None and np_embedding is not None:
-        try:
-            if isinstance(np_embedding, str):
-                import json
-                np_embedding = [float(x) for x in ast.literal_eval(np_embedding)]
-            sim = cosine_similarity(
-                [user_embedding], 
-                [np_embedding]
-            )[0][0]
+    try:
+        sim = calc_sims(user_embedding, np_embedding)
             # scale similarity [-1,1] to [10,40]
-            print(sim)
-            return 10 + (sim * 30) #TODO: get better scaling
-        except Exception as e:
-            print(f"Error computing similarity for node size: {e}")
-    return default_size
+        sim = sim**4  # emphasize higher similarities
+        print(sim)
+        print(f"Size: {10 + ((sim - min_sim) * (30/(max_sim - min_sim))) if max_sim > min_sim else 10}")
+    # return 10 + (max((sim - 0.4), 0) * 30) #TODO: get better scaling
+        return 10 + ((sim - min_sim) * (30/(max_sim - min_sim))) if max_sim > min_sim else 10
+    except Exception as e:
+        print(f"Error computing similarity for node size: {e}")
+        return default_size
 
 def compute_node_color(row):
     codes = row.get("ntee_codes")
@@ -132,6 +142,17 @@ def build_graph(user_id: str, user_embedding: list[float], seed_ids: list[int], 
         color="#FF5733",    # distinct color
         group="user"
     )
+
+    sims = []
+
+    for nid, row in nodes_data.items():
+        if user_embedding is not None and row.get("embedding") is not None:
+            sim = calc_sims(user_embedding, row.get("embedding"))
+            if sim is not None:
+                sims.append(sim)
+
+    min_sim = min(sims)**4 if sims else 0
+    max_sim = max(sims)**4 if max(sims) > min_sim else min_sim + 1e-5
     
     # Add nonprofit nodes
     for nid, row in nodes_data.items():
@@ -143,7 +164,7 @@ def build_graph(user_id: str, user_embedding: list[float], seed_ids: list[int], 
             nid,
             label=row["name"][:40],   # shorter label
             title=f"{mission}<br>Revenue: {rev_str}",
-            size=compute_node_size(row, user_embedding),
+            size=compute_node_size(row, user_embedding, min_sim=min_sim, max_sim=max_sim),
             color=row_color,
             group="nonprofit"
         )
