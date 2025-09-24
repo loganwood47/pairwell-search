@@ -5,8 +5,11 @@ import streamlit as st
 
 OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY")
 if not OPENROUTER_KEY:
-    OPENROUTER_KEY = st.secrets.OPENROUTER_API_KEY
-    
+    try:
+        OPENROUTER_KEY = st.secrets["OPENROUTER_API_KEY"]
+    except Exception:
+        OPENROUTER_KEY = None
+
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 EXPANSION_PROMPT = (

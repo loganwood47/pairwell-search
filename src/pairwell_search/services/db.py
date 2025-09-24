@@ -14,11 +14,17 @@ load_dotenv()
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 if not SUPABASE_URL:
-    SUPABASE_URL = st.secrets.SUPABASE_URL
+    try:
+        SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    except Exception:
+        SUPABASE_URL = None
 
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 if not SUPABASE_KEY:
-    SUPABASE_KEY = st.secrets.SUPABASE_KEY
+    try:
+        SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+    except Exception:
+        SUPABASE_KEY = None
 
 def get_supabase_client() -> Client:
     if not SUPABASE_URL or not SUPABASE_KEY:
