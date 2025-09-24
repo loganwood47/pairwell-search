@@ -8,11 +8,23 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 import numpy as np
 import json
+import streamlit as st
 
 load_dotenv()
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
+if not SUPABASE_URL:
+    try:
+        SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    except Exception:
+        SUPABASE_URL = None
+
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+if not SUPABASE_KEY:
+    try:
+        SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+    except Exception:
+        SUPABASE_KEY = None
 
 def get_supabase_client() -> Client:
     if not SUPABASE_URL or not SUPABASE_KEY:
@@ -126,3 +138,18 @@ def get_engagement_types():
     """Fetch engagement types + weights"""
     rows = supabase.table("engagement_types").select("*").execute()
     return {row["engagement_type"]: row for row in rows}
+
+def get_np_network_edges_by_id(nonprofit_id: list[int] = [1], top_k: int = 15) -> list[dict]:
+    """Fetch network edges for a given nonprofit ID"""
+    resp = supabase.table("network_graph_edges").select("*").in_("nonprofit_id_a", nonprofit_id).lte("metadata->prox_rank", top_k).execute()
+    return resp.data
+
+def fetch_node_attributes(node_ids: list[int]) -> dict[int, dict]:
+    """Fetch NP attributes for given nonprofit IDs for network graph"""
+    resp = (
+        supabase.table("nonprofits")
+        .select("id,name,mission,total_revenue,ntee_codes,logo_url,embedding")
+        .in_("id", node_ids)
+        .execute()
+    )
+    return {r["id"]: r for r in resp.data}

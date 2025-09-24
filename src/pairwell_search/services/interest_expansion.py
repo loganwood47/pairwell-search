@@ -1,8 +1,15 @@
 import os
 import requests
 import json
+import streamlit as st
 
 OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY")
+if not OPENROUTER_KEY:
+    try:
+        OPENROUTER_KEY = st.secrets["OPENROUTER_API_KEY"]
+    except Exception:
+        OPENROUTER_KEY = None
+
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 EXPANSION_PROMPT = (
@@ -18,7 +25,8 @@ def expand_interest(interest: str) -> str:
         "Authorization": f"Bearer {OPENROUTER_KEY}"
     }
     payload = json.dumps({
-        "model": "mistralai/mistral-small-3.2-24b-instruct:free",
+        # "model": "mistralai/mistral-small-3.2-24b-instruct:free",
+        "model": "mistralai/mistral-nemo:free",
         "messages": [{"role": "user", "content": prompt}],
         # "max_tokens": 50,
         # "temperature": 0.7
