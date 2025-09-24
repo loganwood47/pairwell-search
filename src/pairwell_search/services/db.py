@@ -8,11 +8,17 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 import numpy as np
 import json
+import streamlit as st
 
 load_dotenv()
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
+if not SUPABASE_URL:
+    SUPABASE_URL = st.secrets.SUPABASE_URL
+
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+if not SUPABASE_KEY:
+    SUPABASE_KEY = st.secrets.SUPABASE_KEY
 
 def get_supabase_client() -> Client:
     if not SUPABASE_URL or not SUPABASE_KEY:

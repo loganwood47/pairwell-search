@@ -15,13 +15,15 @@ model, preprocessing = similarity.load_model_and_preprocessing(
     text_emb_dim=128, embed_dim=64, cat_emb_dim=16
 )
 
+engagement_options = ["Volunteering", "Donating", "Advocacy", "Event Participation", "Other"]
+
 st.title("Welcome to PairWell! Tell us about yourself to get started.")
 
 city = st.text_input("City")
 state = st.text_input("State")
 income = st.number_input("Income", min_value=0)
 interests = st.text_area("Interests (comma-separated)").split(",")
-engagement_prefs = st.text_area("Engagement Preferences (comma-separated)").split(",")
+engagement_prefs = st.multiselect("Preferred Engagement Types", engagement_options)
 
 
 # user_id = 0
@@ -57,7 +59,7 @@ if st.button("Get Recommendations"):
             user_lon, 
             alpha=0.7, # trained model prediction weight
             beta=0.3,  # mission weight
-            gamma=0.8) # geo weight
+            gamma=0.4) # geo weight
 
         np_ids = [r["id"] for r in recs]
         nonprofits = db.get_nonprofits_by_id(ids=np_ids)

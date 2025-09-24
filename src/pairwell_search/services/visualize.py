@@ -106,9 +106,6 @@ def compute_node_size(row, user_embedding=None, default_size=10, min_sim=0, max_
         sim = calc_sims(user_embedding, np_embedding)
             # scale similarity [-1,1] to [10,40]
         sim = sim**4  # emphasize higher similarities
-        print(sim)
-        print(f"Size: {10 + ((sim - min_sim) * (30/(max_sim - min_sim))) if max_sim > min_sim else 10}")
-    # return 10 + (max((sim - 0.4), 0) * 30) #TODO: get better scaling
         return 10 + ((sim - min_sim) * (30/(max_sim - min_sim))) if max_sim > min_sim else 10
     except Exception as e:
         print(f"Error computing similarity for node size: {e}")
@@ -139,7 +136,8 @@ def build_graph(user_id: str, user_embedding: list[float], seed_ids: list[int], 
         f"user_{user_id}",
         label=f"User {user_id}",
         size=50,            # big size
-        color="#FF5733",    # distinct color
+        # color="#FF5733",    # distinct color
+        color="#FFFF00",    # bright yellow
         group="user"
     )
 
@@ -187,7 +185,7 @@ def show_graph(G):
         net = Network(height="750px", width="100%", bgcolor="#222", font_color="white") 
         net.from_nx(G) 
         for node in net.nodes:
-            if not str(node["id"]).startswith("user_"):
+            if not str(node["id"]).startswith("userX_"):
                 node["color"] = G.nodes[node["id"]].get("color", "#888")
         net.repulsion(node_distance=180, central_gravity=0.2, spring_length=150) 
         st.components.v1.html(net.generate_html(), height=800)
