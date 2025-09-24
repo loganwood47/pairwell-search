@@ -1,8 +1,6 @@
 name: Run Tests
 
-on:
-  push:
-    branches: [ main ]  
+on: 
   pull_request:
     branches: [ main ]
 
