@@ -21,7 +21,8 @@ st.title("Welcome to PairWell! Tell us about yourself to get started.")
 
 city = st.text_input("City")
 state = st.text_input("State")
-income = st.number_input("Income", min_value=0)
+# income = st.number_input("Income", min_value=0)
+income = st.selectbox("Income", options=[0, 25000, 50000, 75000, 100000, 150000, 250000], index=0)
 interests = st.text_area("Interests (comma-separated)").split(",")
 engagement_prefs = st.multiselect("Preferred Engagement Types", engagement_options)
 
