@@ -17,7 +17,7 @@ model, preprocessing = similarity.load_model_and_preprocessing(
 
 engagement_options = ["Volunteering", "Donating", "Advocacy", "Event Participation", "Other"]
 
-st.title("Welcome to PairWell! Tell us about yourself to get started.")
+st.title("Welcome to PairWell! Tell us about yourself to find relevant nonprofits.")
 
 city = st.text_input("City")
 state = st.text_input("State")
@@ -59,8 +59,8 @@ if st.button("Get Recommendations"):
             user_lat, 
             user_lon, 
             alpha=0.7, # trained model prediction weight
-            beta=0.3,  # mission weight
-            gamma=0.4) # geo weight
+            beta=0.4,  # mission weight
+            gamma=0.3) # geo weight
 
         np_ids = [r["id"] for r in recs]
         nonprofits = db.get_nonprofits_by_id(ids=np_ids)
@@ -78,10 +78,10 @@ if st.button("Get Recommendations"):
             "State": np_info.get('state'),
             "Logo": np_info.get("logo_url"),
             "Website": np_info.get('website'),
-            "Score": result_info['total_similarity'],
-            "Model Score": result_info['model_similarity'],
-            "Mission Score": result_info['mission_similarity'],
-            "Geo Score": result_info['geo_distance_meters']
+            "Recommendation Score": result_info['total_similarity'],
+            "Relevance Prediction": result_info['model_similarity'],
+            "Mission Similarity": result_info['mission_similarity'],
+            "Geo Similarity": result_info['geo_distance_meters']
             })
 
         df = pd.DataFrame(data)
