@@ -17,6 +17,8 @@ model, preprocessing = similarity.load_model_and_preprocessing(
 
 engagement_options = ["Volunteering", "Donating", "Advocacy", "Event Participation", "Other"]
 
+st.image('logos/Blue Long.png', width=200)
+
 st.title("Welcome to PairWell! Tell us about yourself to find relevant nonprofits.")
 
 city = st.text_input("City")
