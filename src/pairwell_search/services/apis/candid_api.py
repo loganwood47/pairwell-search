@@ -433,3 +433,108 @@ class CandidPremierAPI:
 
         print(f"Finished export — {len(completed)} nonprofits saved to {output_path}")
         return output_path
+
+class CandidPremierJsonDataLoader:
+    """Utility to load Premier data from JSON into DB"""
+    def __init__(self, premier_json_path: str):
+        self.premier_json_path = premier_json_path
+
+    def _transform_board_data(self, ein: str, board_members: list[dict], nonprofit_id: int) -> list[dict]:
+        """Transform board members data into a simplified schema"""
+        transformed = []
+        for member in board_members:
+            transformed.append({
+                "nonprofit_id": nonprofit_id,
+                "ein": ein,
+                "name": member.get("name"),
+                "title": member.get("title"),
+                "company": member.get("company", [])
+            })
+        return transformed
+    
+    def _transform_projects_data(self, ein: str, projects: list[dict], nonprofit_id: int) -> list[dict]:
+        """Transform programs/projects data into a simplified schema"""
+        transformed = []
+        for project in projects:
+            transformed.append({
+                "nonprofit_id": nonprofit_id,
+                "ein": ein,
+                "name": project.get("name"),
+                "description": project.get("description"),
+                "areas_served": project.get("areas_served", [])
+            })
+        return transformed
+    
+    def _transform_key_employees_data(self, ein: str, employees: list[dict], nonprofit_id: int) -> list[dict]:
+        """Transform key employees data into a simplified schema"""
+        transformed = []
+        for emp in employees:
+            transformed.append({
+                "nonprofit_id": nonprofit_id,
+                "ein": ein,
+                "name": emp.get("name"),
+                "title": emp.get("title"),
+                "type": emp.get("type", []),
+                "compensation": emp.get("compensation"),
+                "other_compensation": emp.get("other_compensation"),
+                "hours": emp.get("hours")
+            })
+        return transformed
+    
+    def transform_financials_data(self, ein: str, financials: dict, nonprofit_id: int) -> dict:
+        """Transform financials data into a simplified schema"""
+        return {
+            "nonprofit_id": nonprofit_id,
+            "ein": ein,
+            "fiscal_year": financials.get("fiscal_year"),
+            "total_revenue": financials.get("total_revenue"),
+            "total_expenses": financials.get("expenses_total"),
+            "total_assets": financials.get("assets_total"),
+            "net_gain_loss": financials.get("net_gain_loss"),
+            "months_of_cash": float(financials.get("months_of_cash")) if financials.get("months_of_cash") else None,
+        }
+
+    def _load_into_db(self) -> int:
+        """Load nonprofits from Premier JSON file into DB"""
+        with open(self.premier_json_path, "r", encoding="utf-8") as f:
+            records = json.load(f)
+
+        added_count = 0
+
+        projectsArray = []
+        boardArray = []
+        keyEmpArray = []
+        financialsArray = []
+
+        for record in records:
+            ein = record.get("ein")
+            nonprofit_id = db.get_nonprofit_by_ein(ein=ein)[0].get("id")
+            print(record)
+            project_data = self._transform_projects_data(record.get("ein"), record.get("programs", []), nonprofit_id)
+            board_data = self._transform_board_data(record.get("ein"), record.get("board_members", []), nonprofit_id)
+            key_emp_data = self._transform_key_employees_data(record.get("ein"), record.get("operations", {}).get("officers_directors_key_employees", []), nonprofit_id)
+            financials_data = self.transform_financials_data(record.get("ein"), record.get("financials", {}), nonprofit_id)
+            projectsArray.extend(project_data)
+            boardArray.extend(board_data)
+            keyEmpArray.extend(key_emp_data)
+            financialsArray.append(financials_data)
+            added_count += 1
+
+        if len(projectsArray) > 0:
+            db.add_nonprofit_projects(projectsArray)
+            print("Added projects:", len(projectsArray))
+        if len(boardArray) > 0:
+            db.add_nonprofit_board_members(boardArray)
+            print("Added board members:", len(boardArray))
+        if len(keyEmpArray) > 0:
+            db.add_nonprofit_key_employees(keyEmpArray)
+            print("Added key employees:", len(keyEmpArray))
+        if len(financialsArray) > 0:
+            db.add_nonprofit_annual_finances(financialsArray)
+            print("Added financial records:", len(financialsArray))
+        
+            # if result and result[0].get("status") == "inserted":
+            #     added_count += 1
+
+        print(f"Loaded {added_count} new nonprofits into the database.")
+        return added_count
