@@ -33,7 +33,7 @@ def get_supabase_client() -> Client:
 
 supabase: Client = get_supabase_client()
 
-
+# --- NONPROFIT DATA FETCHING ---
 def get_nonprofits(limit: int = 1000):
     """Fetch nonprofits from DB"""
     resp = supabase.table("nonprofits").select("*").limit(limit).execute()
@@ -49,10 +49,56 @@ def get_nonprofit_by_ein(limit: int = 1000, ein: str = ""):
     resp = supabase.table("nonprofits").select("*").eq("ein", ein).limit(limit).execute()
     return resp.data
 
+def get_nonprofit_projects(nonprofit_id: int):
+    """Fetch nonprofit projects from DB"""
+    resp = supabase.table("nonprofit_projects").select("*").eq("nonprofit_id", nonprofit_id).execute()
+    return resp.data
+
+def get_nonprofit_key_employees(nonprofit_id: str):
+    """Fetch nonprofit key employees from DB"""
+    resp = supabase.table("nonprofit_key_employees").select("*").eq("nonprofit_id", nonprofit_id).execute()
+    return resp.data
+
+def get_nonprofit_board_members(nonprofit_id: int):
+    """Fetch nonprofit board members from DB"""
+    resp = supabase.table("nonprofit_board_members").select("*").eq("nonprofit_id", nonprofit_id).execute()
+    return resp.data
+
+def get_nonprofit_financials(nonprofit_id: int):
+    """Fetch nonprofit financials from DB"""
+    resp = supabase.table("nonprofit_annual_finances").select("*").eq("nonprofit_id", nonprofit_id).execute()
+    return resp.data
+
+
+# --- NONPROFIT DATA INSERTION ---
+
 def add_nonprofit(nonprofit: dict):
     """Save a new nonprofit"""
     resp = supabase.table("nonprofits").insert(nonprofit).execute()
     return resp.data
+
+def add_nonprofit_projects(projects: list[dict]):
+    """Save new nonprofit projects"""
+    resp = supabase.table("nonprofit_projects").insert(projects).execute()
+    return resp.data
+
+def add_nonprofit_key_employees(employees: list[dict]):
+    """Save new nonprofit key employees"""
+    resp = supabase.table("nonprofit_key_employees").insert(employees).execute()
+    return resp.data
+
+def add_nonprofit_board_members(members: list[dict]):
+    """Save new nonprofit board members"""
+    resp = supabase.table("nonprofit_board_members").insert(members).execute()
+    return resp.data
+
+def add_nonprofit_annual_finances(finances: list[dict]):
+    """Save new nonprofit annual finances"""
+    resp = supabase.table("nonprofit_annual_finances").insert(finances).execute()
+    return resp.data
+
+
+# --- USER PROFILES & ACTIVITY ---
 
 
 def save_user(user_profile: dict):
