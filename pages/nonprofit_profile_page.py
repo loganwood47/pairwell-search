@@ -40,6 +40,9 @@ with col1:
     for project in projects:
         st.subheader(project["name"])
         st.write(project["description"])
+        if project["areas_served"]:
+            areas_served_string = ", ".join(project["areas_served"])
+            st.write("Areas served: {}".format(areas_served_string))
 
 
 with col2:
