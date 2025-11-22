@@ -48,6 +48,7 @@ def on_editor_change():
     if len(selected) > 0:
         np_id = selected.iloc[0].id
         st.session_state["nonprofit_selection"] = np_id
+        st.session_state['recent_donation_data'] = selected.iloc[0]["Donation Activity"]
         st.session_state["navigate_to_profile"] = True
 
 
@@ -124,7 +125,7 @@ if st.button("Get Recommendations"):
                 "State": np_info.get('state'),
                 "Logo": np_info.get("logo_url"),
                 "Website": np_info.get('website'),
-                "Donation Activity": [random.randint(0, 100) for _ in range(7)],  # Placeholder random data to simulate donations
+                "Donation Activity": [random.randint(0, 100) for _ in range(30)],  # Placeholder random data to simulate donations
                 "Recommendation Score": result_info['total_similarity'],
                 "Relevance Prediction": result_info['model_similarity'],
                 "Mission Similarity": result_info['mission_similarity'],
@@ -133,7 +134,7 @@ if st.button("Get Recommendations"):
 
         df = pd.DataFrame(data)
 
-        if "original_df" not in st.session_state:
+        if "original_df" not in st.session_state or st.session_state["original_df"] is None:
             st.session_state["original_df"] = df
 
         if "updated_df" not in st.session_state:
