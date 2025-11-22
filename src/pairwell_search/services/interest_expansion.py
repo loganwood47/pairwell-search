@@ -25,8 +25,8 @@ def expand_interest(interest: str) -> str:
         "Authorization": f"Bearer {OPENROUTER_KEY}"
     }
     payload = json.dumps({
-        # "model": "mistralai/mistral-small-3.2-24b-instruct:free",
-        "model": "mistralai/mistral-nemo:free",
+        # "model": "mistralai/mistral-nemo:free",
+        "model": "openai/gpt-oss-20b:free",
         "messages": [{"role": "user", "content": prompt}],
         # "max_tokens": 50,
         # "temperature": 0.7

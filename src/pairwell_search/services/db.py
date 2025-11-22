@@ -54,7 +54,7 @@ def get_nonprofit_projects(nonprofit_id: int):
     resp = supabase.table("nonprofit_projects").select("*").eq("nonprofit_id", nonprofit_id).execute()
     return resp.data
 
-def get_nonprofit_key_employees(nonprofit_id: str):
+def get_nonprofit_key_employees(nonprofit_id: int):
     """Fetch nonprofit key employees from DB"""
     resp = supabase.table("nonprofit_key_employees").select("*").eq("nonprofit_id", nonprofit_id).execute()
     return resp.data
