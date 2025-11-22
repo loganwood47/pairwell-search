@@ -160,9 +160,14 @@ if st.button("Get Recommendations"):
                                         hide_index=False,
                                         num_rows='fixed',
                                         disabled=[
-                                            "ID", "Nonprofit Name", "Mission", "City", "State", "Logo", "Website",
+                                            "id", "Nonprofit Name", "Mission", "City", "State", "Logo", "Website",
                                             "Recommendation Score", "Relevance Prediction", "Mission Similarity", "Geo Similarity"
-                                        ])
+                                        ],
+                                        column_order=[
+                                            "View Nonprofit Page", "Nonprofit Name", "Mission", "City", "State", "Logo", "Website",
+                                            "Donation Activity", "Recommendation Score", "Relevance Prediction", "Mission Similarity", "Geo Similarity"
+                                        ]
+                                        )
         
         st.session_state["edited_df"] = selectionDF
         
