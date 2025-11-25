@@ -1,6 +1,6 @@
 import streamlit as st
 
-from src.pairwell_search.services.db import get_nonprofits_by_id, get_nonprofit_projects, get_nonprofit_key_employees, get_nonprofit_board_members, get_nonprofit_financials
+from src.pairwell_search.services.db import get_nonprofits_by_id, get_nonprofit_projects, get_nonprofit_key_employees, get_nonprofit_board_members, get_nonprofit_financials, get_np_network_edges_by_id
 
 if st.session_state.get("navigate_home") is True:
     st.session_state["navigate_home"] = False
@@ -63,6 +63,10 @@ with col2:
             st.write("Title: {}".format(member["title"]))
         else:
             pass
+
+np_network = get_np_network_edges_by_id([nonprofit["id"]], top_k=10)
+st.write("## Network Connections")
+st.write(np_network)
 
 
 

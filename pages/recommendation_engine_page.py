@@ -108,9 +108,10 @@ if st.button("Get Recommendations"):
             gamma=0.3) # geo weight
 
         np_ids = [r["id"] for r in recs]
-        nonprofits = db.get_nonprofits_by_id(ids=np_ids)
 
         st.title("Top Recommended Nonprofits:")
+        
+        nonprofits = db.get_nonprofits_by_id(ids=np_ids)
 
         data = []
         for r in np_ids:
