@@ -3,7 +3,7 @@ import pandas as pd
 
 import random
 
-from src.pairwell_search.services import db, embedding_service, similarity, recommend, visualize, interest_expansion, geocode_city
+from src.pairwell_search.services import db, embedding_service, geocoding, similarity, recommend, visualize, interest_expansion
 from src.pairwell_search.models.two_tower import TwoTower
 from src.pairwell_search.services.navigation_functions import rebuild_df, on_editor_change, nav_monitor, initialize_session_df
 
@@ -25,7 +25,8 @@ st.image('logos/Blue Long.png', width=200)
 st.title("Welcome to PairWell! Tell us about yourself to find relevant nonprofits.")
 
 city = st.text_input("City")
-state = geocode_city.match_state_to_abbr(st.text_input("State"))
+state = geocoding.match_state_to_abbr(st.text_input("State"))
+st.write(state)
 
 
 income = st.selectbox("Income", options=[0, 25000, 50000, 75000, 100000, 150000, 250000], index=0)
@@ -48,7 +49,7 @@ if st.button("Get Recommendations"):
     
     with st.spinner("Generating expanded interests and user embeddings..."):
         # Putting these functions inside the button to avoid extra calls
-        user_lat, user_lon = geocode_city.geocode_city(city, state) if city and state else (None, None)
+        user_lat, user_lon = geocoding.geocode_city(city, state) if city and state else (None, None)
 
         expanded_interests = interest_expansion.expand_interest([i.strip() for i in interests if i.strip()]) if interests else []
 
