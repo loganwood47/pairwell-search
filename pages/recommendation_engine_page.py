@@ -26,7 +26,6 @@ st.title("Welcome to PairWell! Tell us about yourself to find relevant nonprofit
 
 city = st.text_input("City")
 state = geocoding.match_state_to_abbr(st.text_input("State"))
-st.write(state)
 
 
 income = st.selectbox("Income", options=[0, 25000, 50000, 75000, 100000, 150000, 250000], index=0)
