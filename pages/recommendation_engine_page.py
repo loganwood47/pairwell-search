@@ -5,52 +5,9 @@ import random
 
 from src.pairwell_search.services import db, embedding_service, similarity, recommend, visualize, interest_expansion, geocode_city
 from src.pairwell_search.models.two_tower import TwoTower
+from src.pairwell_search.services.navigation_functions import rebuild_df, on_editor_change, nav_monitor, initialize_session_df
 
-if "nonprofit_selection" not in st.session_state:
-    st.session_state["nonprofit_selection"] = None
-
-if "nonprofit_donation_data" not in st.session_state:
-    st.session_state["nonprofit_donation_data"] = []
-
-
-if st.session_state.get("navigate_to_profile") is True:
-    st.session_state["navigate_to_profile"] = False
-    st.switch_page("pages/nonprofit_profile_page.py")
-
-def rebuild_df(original_df, editor_state):
-    """Apply edited_rows / added_rows / deleted_rows to reconstruct the DF."""
-    df = original_df.copy()
-
-    # Apply edits
-    for idx, edits in editor_state.get("edited_rows", {}).items():
-        idx = int(idx)
-        for col, val in edits.items():
-            df.at[idx, col] = val
-
-    # Added rows
-    for row in editor_state.get("added_rows", []):
-        df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
-
-    # Deleted rows
-    deleted = editor_state.get("deleted_rows", [])
-    if deleted:
-        df = df.drop(index=deleted).reset_index(drop=True)
-
-    return df
-
-def on_editor_change():
-    state = st.session_state.data_editor_output
-    updated_df = rebuild_df(st.session_state.original_df, state)
-    st.session_state.updated_df = updated_df
-
-    selected = updated_df[updated_df["View Nonprofit Page"] == True]
-
-    if len(selected) > 0:
-        np_id = selected.iloc[0].id
-        st.session_state["nonprofit_selection"] = np_id
-        st.session_state['recent_donation_data'] = selected.iloc[0]["Donation Activity"]
-        st.session_state["navigate_to_profile"] = True
-
+nav_state = nav_monitor()
 
 model_path = "src/pairwell_search/models/two_tower_trained_1758161149.pt"
 preprocessing_path = "src/pairwell_search/models/preprocessing_1758161083.pkl"
@@ -68,7 +25,8 @@ st.image('logos/Blue Long.png', width=200)
 st.title("Welcome to PairWell! Tell us about yourself to find relevant nonprofits.")
 
 city = st.text_input("City")
-state = st.text_input("State")
+state = geocode_city.match_state_to_abbr(st.text_input("State"))
+
 
 income = st.selectbox("Income", options=[0, 25000, 50000, 75000, 100000, 150000, 250000], index=0)
 interests = st.text_area("Interests (comma-separated)").split(",")
@@ -108,9 +66,10 @@ if st.button("Get Recommendations"):
             gamma=0.3) # geo weight
 
         np_ids = [r["id"] for r in recs]
-        nonprofits = db.get_nonprofits_by_id(ids=np_ids)
 
         st.title("Top Recommended Nonprofits:")
+        
+        nonprofits = db.get_nonprofits_by_id(ids=np_ids)
 
         data = []
         for r in np_ids:
@@ -134,11 +93,7 @@ if st.button("Get Recommendations"):
 
         df = pd.DataFrame(data)
 
-        if "original_df" not in st.session_state or st.session_state["original_df"] is None:
-            st.session_state["original_df"] = df
-
-        if "updated_df" not in st.session_state:
-            st.session_state.updated_df = st.session_state.original_df.copy()
+        initialize_session_df(df)
 
         selectionDF = st.data_editor(st.session_state.original_df,
                                     key="data_editor_output",
