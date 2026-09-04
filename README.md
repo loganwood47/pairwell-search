@@ -176,7 +176,7 @@ The current implementation demonstrates the core recommendation experience and t
 
 **[Live Prototype →](https://pairwell-search.streamlit.app/)**
 
-**[MBA Business Plan →](./Final PairWell Business Plan.pdf)**
+**[MBA Business Plan →](./docs/Pairwell_Business_Plan.pdf)**
 
 ---
 
